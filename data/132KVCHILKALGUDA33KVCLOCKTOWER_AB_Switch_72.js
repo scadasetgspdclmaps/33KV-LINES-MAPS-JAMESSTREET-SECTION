@@ -1,0 +1,1 @@
+var json_132KVCHILKALGUDA33KVCLOCKTOWER_AB_Switch_72 = {"type":"FeatureCollection","name":"132KVCHILKALGUDA33KVCLOCKTOWER_AB_Switch_72","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[]}

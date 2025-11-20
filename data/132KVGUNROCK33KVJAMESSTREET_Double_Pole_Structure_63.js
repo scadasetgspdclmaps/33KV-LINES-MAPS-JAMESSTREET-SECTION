@@ -1,0 +1,1 @@
+var json_132KVGUNROCK33KVJAMESSTREET_Double_Pole_Structure_63 = {"type":"FeatureCollection","name":"132KVGUNROCK33KVJAMESSTREET_Double_Pole_Structure_63","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[{"type":"Feature","properties":{"fid":"1","Label":"DP"},"geometry":{"type":"Point","coordinates":[78.494402,17.452509]}}]}

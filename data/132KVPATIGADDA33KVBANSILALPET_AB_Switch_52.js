@@ -1,0 +1,1 @@
+var json_132KVPATIGADDA33KVBANSILALPET_AB_Switch_52 = {"type":"FeatureCollection","name":"132KVPATIGADDA33KVBANSILALPET_AB_Switch_52","crs":{"type":"name","properties":{"name":"urn:ogc:def:crs:OGC:1.3:CRS84"}},"features":[]}
