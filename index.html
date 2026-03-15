@@ -149,8 +149,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   backdrop-filter:blur(22px);border-right:1px solid var(--border);
   display:flex;flex-direction:column;transform:translateX(0);
   transition:transform .32s var(--ease);box-shadow:4px 0 28px rgba(0,0,0,.4);
-  overflow-y:auto;overflow-x:hidden
+  overflow-y:auto;overflow-x:hidden;min-width:180px;max-width:480px
 }
+#panel-resize{
+  position:absolute;top:0;right:-5px;bottom:0;width:10px;
+  cursor:col-resize;z-index:920;
+  background:transparent;transition:background .2s
+}
+#panel-resize:hover,#panel-resize.dragging{background:rgba(0,200,255,.25)}
 #panel.off{transform:translateX(-258px)}
 #panel::-webkit-scrollbar{width:3px}
 #panel::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
@@ -277,6 +283,35 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   transition:all .28s var(--ease);white-space:nowrap
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.ss-label{
+  background:rgba(9,22,37,.9)!important;
+  border:1px solid rgba(0,200,255,.35)!important;
+  border-radius:5px!important;
+  color:#00c8ff!important;
+  font-family:'Share Tech Mono',monospace!important;
+  font-size:9px!important;
+  letter-spacing:.5px!important;
+  padding:2px 6px!important;
+  white-space:nowrap!important;
+  box-shadow:0 2px 8px rgba(0,0,0,.5)!important;
+}
+.ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
+.eht-label{
+  background:rgba(9,22,37,.9)!important;
+  border:1px solid rgba(255,23,68,.4)!important;
+  border-radius:5px!important;
+  color:#ff1744!important;
+  font-family:'Share Tech Mono',monospace!important;
+  font-size:9px!important;
+  padding:2px 6px!important;
+  white-space:nowrap!important;
+}
+#panel-resize{
+  position:absolute;top:0;right:-5px;bottom:0;width:10px;
+  cursor:col-resize;z-index:920;background:transparent;transition:background .2s
+}
+#panel-resize:hover,#panel-resize.dragging{background:rgba(0,200,255,.3)}
 </style>
 </head>
 <body>
@@ -306,25 +341,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 <!-- ── LEFT PANEL ── -->
 <div id="panel">
 
-  <!-- LAYERS -->
-  <div class="psec">
-    <div class="psec-t">// LAYERS</div>
 
+
+  <!-- FEEDER FILTER - per feeder checkboxes -->
+  <div class="psec">
+    <div class="psec-t" style="display:flex;justify-content:space-between;align-items:center">
+      // FEEDERS
+      <span style="font-family:var(--sans);font-size:9px;color:rgba(0,200,255,.4);cursor:pointer" onclick="toggleAllFeeders(true)">ALL</span>
+      <span style="font-family:var(--sans);font-size:9px;color:rgba(0,200,255,.4);cursor:pointer;margin-left:4px" onclick="toggleAllFeeders(false)">NONE</span>
+    </div>
+    <div id="feederChecks" style="display:flex;flex-direction:column;gap:2px;margin-top:4px"></div>
+  </div>
+
+  <!-- LAYER TYPES -->
+  <div class="psec">
+    <div class="psec-t">// LAYER TYPES</div>
     <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
       <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
-      <div class="lname">UG Feeder Lines</div>
+      <div class="lname">UG Lines</div>
       <div class="lcnt" id="cnt-ug-lines">—</div>
       <div class="tog"></div>
     </div>
     <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
       <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
-      <div class="lname">OH Feeder Lines</div>
+      <div class="lname">OH Lines</div>
       <div class="lcnt" id="cnt-oh-lines">—</div>
       <div class="tog"></div>
     </div>
     <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
       <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
-      <div class="lname">Cable Points / Poles</div>
+      <div class="lname">Cable Points</div>
       <div class="lcnt" id="cnt-points">—</div>
       <div class="tog"></div>
     </div>
@@ -346,12 +392,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
       <div class="lcnt" id="cnt-cut">—</div>
       <div class="tog"></div>
     </div>
-  </div>
-
-  <!-- FEEDER FILTER -->
-  <div class="psec">
-    <div class="psec-t">// FEEDER FILTER</div>
-    <div class="pills" id="feederPills"></div>
+    <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
+      <div class="lswatch dot" style="background:#00c8ff;border-color:#fff;border-radius:2px"></div>
+      <div class="lname">33/11KV SS</div>
+      <div class="lcnt" id="cnt-ss33">—</div>
+      <div class="tog"></div>
+    </div>
+    <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
+      <div class="lswatch dot" style="background:#ff1744;border-color:#fff"></div>
+      <div class="lname">EHT SS</div>
+      <div class="lcnt" id="cnt-ehts">—</div>
+      <div class="tog"></div>
+    </div>
+    <div class="lrow off" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
+      <div class="lswatch" style="background:#e8718d;height:2px"></div>
+      <div class="lname">Feeder Segments</div>
+      <div class="lcnt" id="cnt-fsegs">—</div>
+      <div class="tog"></div>
+    </div>
   </div>
 
   <!-- CABLE TYPE FILTER -->
@@ -557,11 +615,21 @@ const DATA_REGISTRY = [
   { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Double_Pole_Structure_73',type:'dp',     feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
   { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Cut_Points_74',           type:'cut',    feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
   { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Feeder_Lines_75',         type:'lines',  feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
+  // ── 33/11KV SUBSTATIONS ──
+  { varName:'json_3311KVSSCOORDINATESWITHDATA20_76', type:'ss33',   feeder:'33/11KV SS', cable:'-' },
+  { varName:'json_SS_WEB_INTERACT_77',               type:'ss33i',  feeder:'33/11KV SS (Interactive)', cable:'-' },
+  { varName:'json_FeederPoles_78',                   type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
+  { varName:'json_Feeder_Segments_WEB_INTERACT_79',  type:'fsegi',  feeder:'Feeder Segments', cable:'-' },
+  { varName:'json_Feeder_Segments_WEB_DISPLAY_80',   type:'fsegd',  feeder:'Feeder Segments Display', cable:'-' },
+  { varName:'json_Feeder_Segments_81',               type:'fsegs',  feeder:'Feeder Segments', cable:'-' },
+  // ── EHT SUBSTATIONS ──
+  { varName:'json_EHTSSCOORDINATESWITHDATA_82',      type:'ehts',   feeder:'EHT SS', cable:'-' },
+  { varName:'json_SS_WEB_INTERACT_83',               type:'ehtsi',  feeder:'EHT SS (Interactive)', cable:'-' },
 ];
 
 // Layer groups
-const LG = { lines:{ug:L.layerGroup(),oh:L.layerGroup()}, points:L.layerGroup(), dp:L.layerGroup(), ab:L.layerGroup(), cut:L.layerGroup() };
-const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:true, cut:true };
+const LG = { lines:{ug:L.layerGroup(),oh:L.layerGroup()}, points:L.layerGroup(), dp:L.layerGroup(), ab:L.layerGroup(), cut:L.layerGroup(), ss33:L.layerGroup(), ehts:L.layerGroup(), fsegs:L.layerGroup() };
+const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:true, cut:true, ss33:true, ehts:true, fsegs:false };
 
 // ══════════════════════════════════════════════════
 //  POPUP BUILDER (uses your real data properties)
@@ -585,6 +653,34 @@ function popup(feat, regEntry){
       <div class="pc-row"><span class="pc-k">Cable Type</span><span class="pc-v ${cableClass}">${cableType}</span></div>
       <div class="pc-row"><span class="pc-k">Nature</span><span class="pc-v">${p['Nature of Feeder']||'—'}</span></div>`;
     acts=`<div class="pc-btn" onclick="toast('Feeder details')">Details</div><div class="pc-btn" onclick="toast('Fault log')">Fault Log</div>`;
+  } else if(regEntry.type==='fsegs'||regEntry.type==='fsegi'||regEntry.type==='fsegd'){
+    tag = 'FEEDER SEGMENT';
+    title = p['Feeder_Name']||feederName;
+    rows = `
+      <div class="pc-row"><span class="pc-k">From Pole</span><span class="pc-v ok">${p['From_Pole']||'—'}</span></div>
+      <div class="pc-row"><span class="pc-k">To Pole</span><span class="pc-v ok">${p['To_Pole']||'—'}</span></div>
+      <div class="pc-row"><span class="pc-k">Pair Type</span><span class="pc-v">${p['Pair_Type']||'—'}</span></div>
+      <div class="pc-row"><span class="pc-k">Segment Length</span><span class="pc-v">${p['Segment_km']||'—'} km</span></div>
+      <div class="pc-row"><span class="pc-k">UG Length</span><span class="pc-v ug">${p['Total_UG_km']||'—'} km</span></div>
+      <div class="pc-row"><span class="pc-k">OH Length</span><span class="pc-v oh">${p['Total_OH_km']||'—'} km</span></div>
+      <div class="pc-row"><span class="pc-k">Transitions</span><span class="pc-v">${p['Total_TRANS_km']||'—'} km</span></div>
+      <div class="pc-row"><span class="pc-k">Total Length</span><span class="pc-v" style="color:#fff;font-weight:700">${p['Total_km']||'—'} km</span></div>
+      ${p['Popup']?'<div class="pc-row" style="flex-direction:column;align-items:flex-start"><span class="pc-k" style="margin-bottom:4px">Details</span><span class="pc-v" style="text-align:left;font-size:10px;color:rgba(176,204,224,.6);white-space:pre-wrap">'+p['Popup']+'</span></div>':''}`;
+    acts=`<div class="pc-btn" onclick="toast('Segment record')">View Segment</div>`;
+  } else if(regEntry.type==='ss33'||regEntry.type==='ss33i'){
+    tag = '33/11KV SUBSTATION';
+    title = p['NAME']||p['name']||'Substation';
+    rows = `
+      ${p['Popup']?'<div class="pc-row" style="flex-direction:column;align-items:flex-start"><span class="pc-k" style="margin-bottom:4px">Substation Details</span><span class="pc-v" style="text-align:left;font-size:10px;color:rgba(176,204,224,.7);white-space:pre-wrap">'+p['Popup']+'</span></div>':''}
+      <div class="pc-row"><span class="pc-k">Division</span><span class="pc-v">${p['Division']||'—'}</span></div>
+      <div class="pc-row"><span class="pc-k">Sub Division</span><span class="pc-v">${p['Sub Division']||'—'}</span></div>`;
+    acts=`<div class="pc-btn" onclick="toast('SS record')">View SS Record</div>`;
+  } else if(regEntry.type==='ehts'||regEntry.type==='ehtsi'){
+    tag = 'EHT SUBSTATION';
+    title = p['EHT_SS_NAME']||p['NAME']||'EHT Substation';
+    rows = `
+      ${p['Popup']?'<div class="pc-row" style="flex-direction:column;align-items:flex-start"><span class="pc-k" style="margin-bottom:4px">EHT Details</span><span class="pc-v" style="text-align:left;font-size:10px;color:rgba(176,204,224,.7);white-space:pre-wrap">'+p['Popup']+'</span></div>':''}`;
+    acts=`<div class="pc-btn" onclick="toast('EHT record')">View EHT Record</div>`;
   } else if(regEntry.type==='points'){
     tag = 'CABLE POINT';
     title = 'Point '+( p['Pole Number']||'');
@@ -721,9 +817,61 @@ DATA_REGISTRY.forEach(reg => {
   });
 });
 
+// ── Load 33/11KV SS and EHT SS separately with special icons ──────────────
+const SS_TYPES = ['ss33','ss33i','ehts','ehtsi','fsegi','fsegd','fsegs','fpoles'];
+DATA_REGISTRY.filter(r=>SS_TYPES.includes(r.type)).forEach(reg=>{
+  const data = window[reg.varName];
+  if(!data||!data.features) return;
+  data.features.forEach(feat=>{
+    if(!feat.geometry) return;
+    const p = feat.properties||{};
+    const popupContent = popup(feat,reg);
+    let layer;
+    if(feat.geometry.type==='Point'){
+      const ll=[feat.geometry.coordinates[1],feat.geometry.coordinates[0]];
+      if(reg.type==='ss33'||reg.type==='ss33i'){
+        // 33/11KV SS - cyan square icon with label
+        const name=(p['NAME']||'').substring(0,12);
+        layer=L.marker(ll,{icon:L.divIcon({className:'',
+          html:`<div style="width:14px;height:14px;background:#00c8ff;border:2px solid #fff;border-radius:2px;box-shadow:0 0 10px #00c8ff;cursor:pointer"></div>`,
+          iconSize:[14,14],iconAnchor:[7,7]})});
+        layer.bindTooltip(p['NAME']||'33/11KV SS',{permanent:true,direction:'top',offset:[0,-10],className:'ss-label'});
+      } else if(reg.type==='ehts'||reg.type==='ehtsi'){
+        // EHT SS - large red diamond icon
+        const name=(p['EHT_SS_NAME']||p['NAME']||'').substring(0,15);
+        layer=L.marker(ll,{icon:L.divIcon({className:'',
+          html:`<div style="width:18px;height:18px;background:#ff1744;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 0 12px #ff1744;cursor:pointer"></div>`,
+          iconSize:[18,18],iconAnchor:[9,9]})});
+        layer.bindTooltip(p['EHT_SS_NAME']||p['NAME']||'EHT SS',{permanent:true,direction:'top',offset:[0,-12],className:'ss-label'});
+      } else if(reg.type==='fpoles'){
+        layer=L.marker(ll,{icon:L.divIcon({className:'',
+          html:`<div style="width:7px;height:7px;background:#b0cce0;border:1px solid #fff;border-radius:50%;opacity:.7"></div>`,
+          iconSize:[7,7],iconAnchor:[3,3]})});
+      }
+      if(layer){
+        layer.bindPopup(popupContent,{maxWidth:320});
+        layer.addTo(reg.type.startsWith('ss')?LG.ss33:reg.type.startsWith('eht')?LG.ehts:LG.points);
+        totalFeatures++;
+      }
+    } else if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
+      if(reg.type==='fsegd'||reg.type==='fsegi'||reg.type==='fsegs'){
+        const coords=feat.geometry.type==='LineString'
+          ?feat.geometry.coordinates.map(c=>[c[1],c[0]])
+          :feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
+        layer=L.polyline(coords,{color:'#e8718d',weight:2,opacity:.7,dashArray:'4 3'});
+        layer.bindPopup(popupContent,{maxWidth:320});
+        layer.addTo(LG.fsegs);
+        totalFeatures++;
+      }
+    }
+  });
+});
+
 // Add all layer groups to map
 Object.values(LG.lines).forEach(lg=>lg.addTo(map));
 LG.points.addTo(map); LG.dp.addTo(map); LG.ab.addTo(map); LG.cut.addTo(map);
+LG.ss33.addTo(map); LG.ehts.addTo(map);
+// fsegs off by default (too dense)
 
 // Update counts
 const ugLinesCount = [...LG.lines.ug.getLayers()].filter(l=>l instanceof L.Polyline).length;
@@ -810,7 +958,8 @@ function toggleLyr(id){
   const el=document.getElementById('lyr-'+id);
   const targets={
     'ug-lines':[LG.lines.ug],'oh-lines':[LG.lines.oh],
-    'points':[LG.points],'dp':[LG.dp],'ab':[LG.ab],'cut':[LG.cut]
+    'points':[LG.points],'dp':[LG.dp],'ab':[LG.ab],'cut':[LG.cut],
+    'ss33':[LG.ss33],'ehts':[LG.ehts],'fsegs':[LG.fsegs]
   };
   (targets[id]||[]).forEach(lg=>{
     LGstate[id]?lg.addTo(map):map.removeLayer(lg);
@@ -933,6 +1082,101 @@ function toast(msg,dur=2200){
   clearTimeout(_tt); _tt=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
+// ══ PER-FEEDER CHECKBOXES ══════════════════════════════════════════════════
+// Built after data loads; each feeder gets its own layer group
+const feederLayerGroups = {}; // feederName → {ug:layerGroup, oh:layerGroup, points:layerGroup, ...}
+const feederState = {};       // feederName → true/false
+
+function buildFeederChecks(){
+  const container = document.getElementById('feederChecks');
+  if(!container) return;
+  container.innerHTML = '';
+  const FCOLORS = ['#00c8ff','#ff9800','#00e676','#9c27b0','#2196f3','#f44336','#ffeb3b','#e91e63'];
+  [...feederNames].sort().forEach((fn,i)=>{
+    feederState[fn] = true;
+    const color = FCOLORS[i % FCOLORS.length];
+    const short = fn.replace('→','→').substring(0,22);
+    const row = document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;cursor:pointer;transition:background .2s';
+    row.onmouseenter=()=>row.style.background='rgba(0,200,255,.07)';
+    row.onmouseleave=()=>row.style.background='transparent';
+    row.innerHTML=`
+      <div style="width:14px;height:14px;border-radius:3px;background:${color};opacity:.9;flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></div>
+      <span style="font-family:var(--sans);font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${fn}">${short}</span>
+      <div class="tog" id="ftog-${i}" style="flex-shrink:0"></div>`;
+    row.querySelector('.tog').classList.toggle('off', false); // starts ON
+    row.onclick = () => toggleFeeder(fn, i, color);
+    container.appendChild(row);
+  });
+}
+
+function toggleFeeder(fn, idx, color){
+  feederState[fn] = !feederState[fn];
+  const tog = document.getElementById('ftog-'+idx);
+  if(tog) tog.classList.toggle('off', !feederState[fn]);
+  // Show/hide all layers belonging to this feeder
+  allLayers.forEach(({layer, feederName})=>{
+    if(feederName !== fn) return;
+    const el = layer.getElement ? layer.getElement() : null;
+    if(el) el.style.display = feederState[fn] ? '' : 'none';
+    // For polylines
+    if(layer._path) layer._path.style.display = feederState[fn] ? '' : 'none';
+  });
+  toast((feederState[fn]?'Showing':'Hidden')+': '+fn.split('→')[1]?.trim()||fn);
+}
+
+function toggleAllFeeders(show){
+  [...feederNames].forEach((fn,i)=>{
+    feederState[fn] = show;
+    const tog = document.getElementById('ftog-'+i);
+    if(tog) tog.classList.toggle('off', !show);
+    allLayers.forEach(({layer, feederName})=>{
+      if(feederName !== fn) return;
+      if(layer._path) layer._path.style.display = show ? '' : 'none';
+      const el = layer.getElement ? layer.getElement() : null;
+      if(el) el.style.display = show ? '' : 'none';
+    });
+  });
+  toast(show ? 'All feeders shown' : 'All feeders hidden');
+}
+
+// ══ PANEL RESIZE ═══════════════════════════════════════════════════════════
+(function(){
+  const panel = document.getElementById('panel');
+  const ptab  = document.getElementById('ptab');
+  const legend= document.getElementById('legend');
+  if(!panel) return;
+
+  // Insert resize handle
+  const handle = document.createElement('div');
+  handle.id = 'panel-resize';
+  panel.appendChild(handle);
+
+  let dragging=false, startX=0, startW=0;
+  handle.addEventListener('mousedown',e=>{
+    dragging=true; startX=e.clientX; startW=panel.offsetWidth;
+    handle.classList.add('dragging');
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove',e=>{
+    if(!dragging) return;
+    const w = Math.min(480, Math.max(180, startW + e.clientX - startX));
+    panel.style.width = w+'px';
+    ptab.style.left = w+'px';
+    legend.style.left = (w+10)+'px';
+    map.invalidateSize();
+  });
+  document.addEventListener('mouseup',()=>{
+    if(!dragging) return;
+    dragging=false;
+    handle.classList.remove('dragging');
+    document.body.style.cursor='';
+    document.body.style.userSelect='';
+  });
+})();
+
 // ══════════════════════════════════════════════════
 //  LOADING SEQUENCE
 // ══════════════════════════════════════════════════
@@ -948,6 +1192,11 @@ setTimeout(()=>{
   map.invalidateSize();
   setTimeout(()=>{ ov.remove(); map.invalidateSize(); },500);
   toast('James Street 33KV section loaded — '+totalFeatures+' features',3000);
+  buildFeederChecks();
+  // Update SS counts
+  document.getElementById('cnt-ss33').textContent = LG.ss33.getLayers().length||'—';
+  document.getElementById('cnt-ehts').textContent = LG.ehts.getLayers().length||'—';
+  document.getElementById('cnt-fsegs').textContent = LG.fsegs.getLayers().length||'—';
 },1100);
 </script>
 </body>
