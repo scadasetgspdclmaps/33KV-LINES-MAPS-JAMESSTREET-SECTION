@@ -95,7 +95,7 @@
 <script src="data/FeederPoles_78.js"></script>
 <script src="data/Feeder_Segments_WEB_INTERACT_79.js"></script>
 <script src="data/Feeder_Segments_WEB_DISPLAY_80.js"></script>
-<script src="data/Feeder_Segments_81.js"></script>
+<!-- Feeder_Segments_81 loaded deferred -->
 <script src="data/EHTSSCOORDINATESWITHDATA_82.js"></script>
 <script src="data/SS_WEB_INTERACT_83.js"></script>
 
@@ -621,7 +621,7 @@ const DATA_REGISTRY = [
   { varName:'json_FeederPoles_78',                   type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
   { varName:'json_Feeder_Segments_WEB_INTERACT_79',  type:'fsegi',  feeder:'Feeder Segments', cable:'-' },
   { varName:'json_Feeder_Segments_WEB_DISPLAY_80',   type:'fsegd',  feeder:'Feeder Segments Display', cable:'-' },
-  { varName:'json_Feeder_Segments_81',               type:'fsegs',  feeder:'Feeder Segments', cable:'-' },
+  { varName:'json_Feeder_Segments_81',               type:'fsegs',  feeder:'Feeder Segments', cable:'-' }, // large file - loads last
   // ── EHT SUBSTATIONS ──
   { varName:'json_EHTSSCOORDINATESWITHDATA_82',      type:'ehts',   feeder:'EHT SS', cable:'-' },
   { varName:'json_SS_WEB_INTERACT_83',               type:'ehtsi',  feeder:'EHT SS (Interactive)', cable:'-' },
@@ -744,10 +744,12 @@ const feederNames = new Set();
 const allLayers = []; // {layer, regEntry, feeder, cable}
 
 DATA_REGISTRY.forEach(reg => {
+  try {
   const data = window[reg.varName];
   if(!data || !data.features) return;
 
   data.features.forEach(feat => {
+    try {
     const props = feat.properties || {};
     const cableType = props['Type of Feeder'] || reg.cable;
     const feederName = props['Feeder Name'] || reg.feeder;
@@ -814,57 +816,60 @@ DATA_REGISTRY.forEach(reg => {
     }
 
     if(layer) allLayers.push({layer, reg, feeder:feederNames.values().next().value||reg.feeder, cable:cableType, feederName});
+    } catch(e){ /* skip bad feature */ }
   });
+  } catch(e){ console.warn('Layer error:', reg.varName, e); }
 });
 
 // ── Load 33/11KV SS and EHT SS separately with special icons ──────────────
 const SS_TYPES = ['ss33','ss33i','ehts','ehtsi','fsegi','fsegd','fsegs','fpoles'];
-DATA_REGISTRY.filter(r=>SS_TYPES.includes(r.type)).forEach(reg=>{
-  const data = window[reg.varName];
-  if(!data||!data.features) return;
-  data.features.forEach(feat=>{
-    if(!feat.geometry) return;
-    const p = feat.properties||{};
-    const popupContent = popup(feat,reg);
-    let layer;
-    if(feat.geometry.type==='Point'){
-      const ll=[feat.geometry.coordinates[1],feat.geometry.coordinates[0]];
-      if(reg.type==='ss33'||reg.type==='ss33i'){
-        // 33/11KV SS - cyan square icon with label
-        const name=(p['NAME']||'').substring(0,12);
-        layer=L.marker(ll,{icon:L.divIcon({className:'',
-          html:`<div style="width:14px;height:14px;background:#00c8ff;border:2px solid #fff;border-radius:2px;box-shadow:0 0 10px #00c8ff;cursor:pointer"></div>`,
-          iconSize:[14,14],iconAnchor:[7,7]})});
-        layer.bindTooltip(p['NAME']||'33/11KV SS',{permanent:true,direction:'top',offset:[0,-10],className:'ss-label'});
-      } else if(reg.type==='ehts'||reg.type==='ehtsi'){
-        // EHT SS - large red diamond icon
-        const name=(p['EHT_SS_NAME']||p['NAME']||'').substring(0,15);
-        layer=L.marker(ll,{icon:L.divIcon({className:'',
-          html:`<div style="width:18px;height:18px;background:#ff1744;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 0 12px #ff1744;cursor:pointer"></div>`,
-          iconSize:[18,18],iconAnchor:[9,9]})});
-        layer.bindTooltip(p['EHT_SS_NAME']||p['NAME']||'EHT SS',{permanent:true,direction:'top',offset:[0,-12],className:'ss-label'});
-      } else if(reg.type==='fpoles'){
-        layer=L.marker(ll,{icon:L.divIcon({className:'',
-          html:`<div style="width:7px;height:7px;background:#b0cce0;border:1px solid #fff;border-radius:50%;opacity:.7"></div>`,
-          iconSize:[7,7],iconAnchor:[3,3]})});
-      }
-      if(layer){
-        layer.bindPopup(popupContent,{maxWidth:320});
-        layer.addTo(reg.type.startsWith('ss')?LG.ss33:reg.type.startsWith('eht')?LG.ehts:LG.points);
-        totalFeatures++;
-      }
-    } else if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
-      if(reg.type==='fsegd'||reg.type==='fsegi'||reg.type==='fsegs'){
-        const coords=feat.geometry.type==='LineString'
-          ?feat.geometry.coordinates.map(c=>[c[1],c[0]])
-          :feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
-        layer=L.polyline(coords,{color:'#e8718d',weight:2,opacity:.7,dashArray:'4 3'});
-        layer.bindPopup(popupContent,{maxWidth:320});
-        layer.addTo(LG.fsegs);
-        totalFeatures++;
-      }
-    }
-  });
+DATA_REGISTRY.filter(r=>SS_TYPES.includes(r.type)).forEach(function(reg){
+  try {
+    const data = window[reg.varName];
+    if(!data||!data.features) return;
+    data.features.forEach(function(feat){
+      try {
+        if(!feat.geometry) return;
+        const p = feat.properties||{};
+        const popupContent = popup(feat,reg);
+        let layer;
+        if(feat.geometry.type==='Point'){
+          const ll=[feat.geometry.coordinates[1],feat.geometry.coordinates[0]];
+          if(reg.type==='ss33'||reg.type==='ss33i'){
+            layer=L.marker(ll,{icon:L.divIcon({className:'',
+              html:'<div style="width:14px;height:14px;background:#00c8ff;border:2px solid #fff;border-radius:2px;box-shadow:0 0 10px #00c8ff;cursor:pointer"></div>',
+              iconSize:[14,14],iconAnchor:[7,7]})});
+            layer.bindTooltip(p['NAME']||'33/11KV SS',{permanent:true,direction:'top',offset:[0,-10],className:'ss-label'});
+          } else if(reg.type==='ehts'||reg.type==='ehtsi'){
+            layer=L.marker(ll,{icon:L.divIcon({className:'',
+              html:'<div style="width:18px;height:18px;background:#ff1744;border:2px solid #fff;transform:rotate(45deg);box-shadow:0 0 12px #ff1744;cursor:pointer"></div>',
+              iconSize:[18,18],iconAnchor:[9,9]})});
+            layer.bindTooltip(p['EHT_SS_NAME']||p['NAME']||'EHT SS',{permanent:true,direction:'top',offset:[0,-12],className:'ss-label'});
+          } else if(reg.type==='fpoles'){
+            layer=L.marker(ll,{icon:L.divIcon({className:'',
+              html:'<div style="width:7px;height:7px;background:#b0cce0;border:1px solid #fff;border-radius:50%;opacity:.7"></div>',
+              iconSize:[7,7],iconAnchor:[3,3]})});
+          }
+          if(layer){
+            layer.bindPopup(popupContent,{maxWidth:320});
+            var lg = reg.type.startsWith('ss')?LG.ss33:reg.type.startsWith('eht')?LG.ehts:LG.points;
+            layer.addTo(lg);
+            totalFeatures++;
+          }
+        } else if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
+          if(reg.type==='fsegd'||reg.type==='fsegi'||reg.type==='fsegs'){
+            var coords=feat.geometry.type==='LineString'
+              ?feat.geometry.coordinates.map(function(c){return[c[1],c[0]];})
+              :feat.geometry.coordinates[0].map(function(c){return[c[1],c[0]];});
+            layer=L.polyline(coords,{color:'#e8718d',weight:2,opacity:.7,dashArray:'4 3'});
+            layer.bindPopup(popupContent,{maxWidth:320});
+            layer.addTo(LG.fsegs);
+            totalFeatures++;
+          }
+        }
+      } catch(featErr){ /* skip bad feature */ }
+    });
+  } catch(regErr){ console.warn('SS layer error:', reg.varName, regErr); }
 });
 
 // Add all layer groups to map
@@ -1186,18 +1191,53 @@ const iv=setInterval(()=>{
   pct+=Math.random()*15+7; if(pct>=100){pct=100;clearInterval(iv);}
   fill.style.width=pct+'%';
 },80);
-setTimeout(()=>{
+
+// Always dismiss loader even on errors
+function dismissLoader(){
   const ov=document.getElementById('loader');
-  ov.classList.add('gone');
-  map.invalidateSize();
-  setTimeout(()=>{ ov.remove(); map.invalidateSize(); },500);
+  if(ov){ ov.classList.add('gone'); setTimeout(()=>{ try{ov.remove();}catch(e){} },500); }
+  try{ map.invalidateSize(); }catch(e){}
+  // Defer-load the large Feeder_Segments_81.js after map is visible
+  setTimeout(()=>{
+    const s=document.createElement('script');
+    s.src='data/Feeder_Segments_81.js';
+    s.onload=()=>{
+      try{
+        if(typeof json_Feeder_Segments_81!=='undefined' && json_Feeder_Segments_81.features){
+          json_Feeder_Segments_81.features.forEach(feat=>{
+            try{
+              if(!feat.geometry) return;
+              const p=feat.properties||{};
+              const popupContent = popup(feat,{type:'fsegs',feeder:'Feeder Segments',cable:'-'});
+              if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
+                const coords=feat.geometry.type==='LineString'
+                  ?feat.geometry.coordinates.map(c=>[c[1],c[0]])
+                  :feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
+                const layer=L.polyline(coords,{color:'#e8718d',weight:2,opacity:.7,dashArray:'4 3'});
+                layer.bindPopup(popupContent,{maxWidth:320});
+                layer.addTo(LG.fsegs);
+              }
+            }catch(e){}
+          });
+          document.getElementById('cnt-fsegs').textContent=LG.fsegs.getLayers().length;
+          toast('Feeder segments loaded',1500);
+        }
+      }catch(e){ console.warn('fsegs load error',e); }
+    };
+    document.head.appendChild(s);
+  }, 2000);
+}
+window.onerror = function(){ dismissLoader(); return false; };
+
+setTimeout(()=>{
+  dismissLoader();
   toast('James Street 33KV section loaded — '+totalFeatures+' features',3000);
   buildFeederChecks();
   // Update SS counts
   document.getElementById('cnt-ss33').textContent = LG.ss33.getLayers().length||'—';
   document.getElementById('cnt-ehts').textContent = LG.ehts.getLayers().length||'—';
   document.getElementById('cnt-fsegs').textContent = LG.fsegs.getLayers().length||'—';
-},1100);
+},800);
 </script>
 </body>
 </html>
