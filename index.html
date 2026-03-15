@@ -1227,17 +1227,32 @@ function dismissLoader(){
     document.head.appendChild(s);
   }, 2000);
 }
-window.onerror = function(){ dismissLoader(); return false; };
+window.onerror = function(msg,src,line,col,err){ 
+  console.error('JS Error:',msg,'at line',line,err);
+  dismissLoader(); 
+  return false; 
+};
 
-setTimeout(()=>{
-  dismissLoader();
-  toast('James Street 33KV section loaded — '+totalFeatures+' features',3000);
-  buildFeederChecks();
-  // Update SS counts
-  document.getElementById('cnt-ss33').textContent = LG.ss33.getLayers().length||'—';
-  document.getElementById('cnt-ehts').textContent = LG.ehts.getLayers().length||'—';
-  document.getElementById('cnt-fsegs').textContent = LG.fsegs.getLayers().length||'—';
+// Dismiss after 800ms normally
+setTimeout(function(){
+  try{
+    dismissLoader();
+    toast('James Street 33KV section loaded — '+totalFeatures+' features',3000);
+    buildFeederChecks();
+    var ss33cnt = LG.ss33.getLayers().length;
+    var ehtscnt = LG.ehts.getLayers().length;
+    var fsegscnt = LG.fsegs.getLayers().length;
+    document.getElementById('cnt-ss33').textContent = ss33cnt||'—';
+    document.getElementById('cnt-ehts').textContent = ehtscnt||'—';
+    document.getElementById('cnt-fsegs').textContent = fsegscnt||'—';
+  }catch(e){ dismissLoader(); }
 },800);
+
+// Hard fallback - ALWAYS dismiss after 5 seconds
+setTimeout(function(){ dismissLoader(); }, 5000);
+
+// Click loader to dismiss
+document.getElementById('loader').addEventListener('click', function(){ dismissLoader(); });
 </script>
 </body>
 </html>
