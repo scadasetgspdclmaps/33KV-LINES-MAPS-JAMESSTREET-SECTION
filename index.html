@@ -140,6 +140,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0;transition:all .3s}
 .chip-live{color:var(--ok);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)}
+.chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:blink .6s infinite}
+.chip-trip{color:var(--trip);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.1);animation:blink .4s infinite}
+@keyframes blink{50%{opacity:.35}}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -191,12 +194,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 /* FOCUS HIGHLIGHT HOVER EFFECT */
 .focus-txt { transition: 0.2s; }
 .focus-txt:hover { color: #fff !important; font-weight: bold; padding-left: 3px; }
-
-/* Basemap */
-.bmgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:2px}
-.bmbtn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:7px 5px;cursor:pointer;text-align:center;font-family:var(--sans);font-size:11px;color:var(--text);transition:all .2s}
-.bmbtn:hover{background:rgba(0,200,255,.08);border-color:var(--live);transform:scale(1.02)}
-.bmbtn.active{background:rgba(0,200,255,.15);border-color:var(--live);color:var(--live);font-weight:600}
 
 /* Pills */
 .pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
@@ -300,6 +297,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   font-weight: bold !important;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
   padding: 0 !important;
+  pointer-events: none; /* Make them pass-through so clicks hit the poles */
 }
 
 /* Bottom bar & Legend */
@@ -349,7 +347,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
 
-/* ── ANIMATED 33/11KV SS SYMBOL — circular dashed ring + lightning ── */
+/* ── ANIMATED 33/11KV SS SYMBOL ── */
 @keyframes ss33-ring-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
@@ -363,7 +361,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   60%      { box-shadow: 0 0 0 8px rgba(255,100,0,0),  0 0 20px rgba(255,100,0,0.8); }
 }
 
-/* 33/11KV SS — circular dashed rotating ring */
 .ss33-wrap {
   position:relative;
   width:36px;height:36px;
@@ -392,7 +389,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   margin-top:-1px;
 }
 
-/* EHT SS — rectangular glowing border + power symbol */
 .eht-wrap {
   position:relative;
   width:40px;height:28px;
@@ -421,14 +417,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 
 /* ── FEEDER STATUS COLOURS on feeder lines ── */
-/* live = blue/red (default), breakdown = red pulse, idle = grey */
 @keyframes breakdown-pulse {
   0%,100% { opacity:1; }
   50%      { opacity:0.25; }
 }
 .feeder-breakdown { animation: breakdown-pulse 0.7s infinite; }
 
-/* ── FEEDER STATUS PANEL inside popup ── */
 .fs-status-bar {
   display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee;
 }
@@ -442,7 +436,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .fs-status-btn.active-idle       { background:#9e9e9e;color:#fff;border-color:#9e9e9e; }
 .fs-status-btn:not([class*=active]):hover { background:#f0f0f0; }
 
-/* ── STATUS BADGE on feeder row in panel ── */
 .f-badge {
   font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;
   font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;
@@ -451,7 +444,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:breakdown-pulse 0.7s infinite; }
 .f-badge-idle      { background:rgba(158,158,158,.2);color:#9e9e9e;border:1px solid #9e9e9e; }
 
-/* ── FEEDER STATUS LEGEND bottom ── */
 .status-legend {
   position:fixed;bottom:46px;right:58px;z-index:800;
   background:rgba(13,27,42,.92);backdrop-filter:blur(10px);
@@ -461,7 +453,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .sl-row{display:flex;align-items:center;gap:6px;color:var(--text)}
 .sl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
 
 /* ── RIGHT SIDE BASEMAP TABS ── */
 #bm-tabs {
@@ -508,13 +499,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   box-shadow: -3px 0 16px rgba(0,200,255,0.25);
 }
 
-
 /* ── RIGHT CONTROL PANEL ── */
 #rpanel {
   position:fixed;top:52px;right:50px;bottom:38px;z-index:890;
   width:230px;
   display:flex;flex-direction:column;gap:6px;
-  pointer-events:none; /* children re-enable */
+  pointer-events:none; 
   overflow-y:auto;overflow-x:hidden;padding:8px 4px;
 }
 #rpanel::-webkit-scrollbar{width:3px}
@@ -554,8 +544,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .rcard.collapsed .rcard-body { display:none; }
 
-
-/* ── INLINE FEEDER STATUS BUTTONS in feeder list ── */
 .fi-btn {
   flex:1;padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.15);
   background:rgba(255,255,255,.05);color:rgba(176,204,224,.6);
@@ -660,6 +648,105 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   </div>
 </div>
 
+<div id="bm-tabs">
+  <div class="bm-tab active" id="bm-dark" onclick="setBM('dark')">🌑 DARK</div>
+  <div class="bm-tab"        id="bm-satellite" onclick="setBM('satellite')">🛰 SATELLITE</div>
+  <div class="bm-tab"        id="bm-street"   onclick="setBM('street')">🗺 STREET</div>
+  <div class="bm-tab"        id="bm-google"   onclick="setBM('google')">📍 GOOGLE</div>
+</div>
+
+<div id="rpanel">
+
+  <div class="rcard" id="rc-layers">
+    <div class="rcard-hd" onclick="toggleRcard('rc-layers')">
+      <span class="rcard-title">// LAYER TYPES</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
+        <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
+        <div class="lname">UG Lines</div>
+        <div class="lcnt" id="cnt-ug-lines">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
+        <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
+        <div class="lname">OH Lines</div>
+        <div class="lcnt" id="cnt-oh-lines">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
+        <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
+        <div class="lname">Cable Points</div>
+        <div class="lcnt" id="cnt-points">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')">
+        <div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div>
+        <div class="lname">DP Structures</div>
+        <div class="lcnt" id="cnt-dp">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')">
+        <div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div>
+        <div class="lname">AB Switches</div>
+        <div class="lcnt" id="cnt-ab">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')">
+        <div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div>
+        <div class="lname">Cut Points</div>
+        <div class="lcnt" id="cnt-cut">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
+        <div class="lswatch dot" style="background:#2196f3;border-color:#fff;border-radius:50%"></div>
+        <div class="lname">33/11KV SS</div>
+        <div class="lcnt" id="cnt-ss33">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
+        <div class="lswatch dot" style="background:#800080;border-color:#fff"></div>
+        <div class="lname">EHT SS</div>
+        <div class="lcnt" id="cnt-ehts">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
+        <div class="lswatch" style="background:#e8718d;height:2px"></div>
+        <div class="lname">Feeder Segments</div>
+        <div class="lcnt" id="cnt-fsegs">—</div>
+        <div class="tog"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rcard" id="rc-cable">
+    <div class="rcard-hd" onclick="toggleRcard('rc-cable')">
+      <span class="rcard-title">// CABLE TYPE</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="pills">
+        <div class="pill active" id="fp-all" style="color:#00c8ff;border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.1)" onclick="setCableFilter('all')">ALL</div>
+        <div class="pill" id="fp-ug" style="color:#2196f3;border-color:rgba(33,150,243,.3)" onclick="setCableFilter('ug')">UG ONLY</div>
+        <div class="pill" id="fp-oh" style="color:#f44336;border-color:rgba(244,67,54,.3)" onclick="setCableFilter('oh')">OH ONLY</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rcard" id="rc-stats">
+    <div class="rcard-hd" onclick="toggleRcard('rc-stats')">
+      <span class="rcard-title">// SECTION STATS</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="strow"><span class="stlbl">Total Features</span><span class="stval" id="st-total">—</span></div>
+      <div class="strow"><span class="stlbl">Visible Features</span><span class="stval" id="st-visible">—</span></div>
+    </div>
+  </div>
+
+</div>
+
 <script>
 // ══════════════════════════════════════════════════
 //  CORE SETUP & FULLSCREEN
@@ -689,7 +776,7 @@ function toggleFullscreen() {
   }
 }
 
-// Lazy tile factory — only creates layer when first used, prevents preloading satellite tiles
+// Lazy tile factory 
 const _bmDefs = {
   dark:      ['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}],
   satellite: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:22}],
@@ -806,8 +893,8 @@ const DATA_REGISTRY = [
 const allLayers = []; 
 const feederNames = new Set();
 const feederState = {}; 
-const feederStatus = {}; // 'live' | 'breakdown' | 'idle'  per feederName
-const feederLayerMap = {}; // feederName -> [layers]  for style updates
+const feederStatus = {}; 
+const feederLayerMap = {}; 
 
 const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:true, cut:true, ss33:true, ehts:true, fsegs:true };
 let cableFilter = 'all';
@@ -842,19 +929,20 @@ function updateVisibility() {
     }
   });
   document.getElementById('st-visible').textContent = visibleCount;
+  
+  // Call syncLabels after visibility changes to bind/unbind tooltips
+  syncLabels();
 }
 
 // ══════════════════════════════════════════════════
-//  WHITE DYNAMIC POPUP BUILDER 
+//  WHITE DYNAMIC POPUP BUILDER  (LAZY EVALUATED)
 // ══════════════════════════════════════════════════
 function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
   
-  // Hide messy internal keys
   const hideKeys = ['id', 'layer', 'path', 'fid'];
 
-  // Add the ID to the top left if available
   let headerId = '';
   if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) {
     headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID'] || p['Pole Number']}</div>`;
@@ -864,7 +952,6 @@ function popup(feat, regEntry){
     if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
         let val = p[k];
 
-        // Ensure "Popup" data renders cleanly at the bottom
         if (k.toLowerCase() === 'popup') {
             rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Details:</strong><br>${val}</td></tr>`;
             return; 
@@ -880,8 +967,7 @@ function popup(feat, regEntry){
     }
   });
 
-  // Status bar — shown for feeder lines and segments
-  const fn = feat.properties['Feeder Name'] || (regEntry && regEntry.feeder) || '';
+  const fn = p['Feeder Name'] || (regEntry && regEntry.feeder) || '';
   let statusBar = '';
   if(fn && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
     const cur = feederStatus[fn] || 'live';
@@ -892,25 +978,21 @@ function popup(feat, regEntry){
     </div>`;
   }
 
-  return `${headerId}
-    <table class="popup-table">${rows}</table>
-    ${statusBar}`;
+  return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
 
 // ══════════════════════════════════════════════════
-//  ICON FACTORY
+//  ICON FACTORY (Square markers only)
 // ══════════════════════════════════════════════════
-function mkIcon(color, border, shape='circle', char=''){
-  const s = shape==='square'
-    ? `width:12px;height:12px;border-radius:0px;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`
-    : `width:10px;height:10px;border-radius:50%;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`;
+function mkIcon(color, border, shape='square', char=''){
+  const s = `width:12px;height:12px;border-radius:0px;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`;
   return L.divIcon({className:'',
     html:`<div style="${s};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:7px;color:${border}">${char}</div>`,
     iconSize:[12,12],iconAnchor:[6,6]});
 }
 
 // ══════════════════════════════════════════════════
-//  LOAD ALL DATA
+//  LOAD ALL DATA (OPTIMIZED WITH CANVAS)
 // ══════════════════════════════════════════════════
 DATA_REGISTRY.forEach(reg => {
   try {
@@ -930,8 +1012,8 @@ DATA_REGISTRY.forEach(reg => {
         feederNames.add(feederName);
     }
 
-    const popupContent = popup(feat, reg);
     let layer;
+    let poleNoStr = null;
 
     // ── MAIN BASE LINES ──
     if(reg.type==='lines' || reg.type.startsWith('fseg')){
@@ -949,11 +1031,12 @@ DATA_REGISTRY.forEach(reg => {
           
         layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{
-            // Respect focus state opacity
             const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
             e.target.setStyle({weight:4, opacity: isFocused ? 0.15 : 0.9});
         });
-        layer.bindPopup(popupContent);
+        
+        // LAZY POPUP BINDING - Huge performance boost!
+        layer.bindPopup(() => popup(feat, reg));
       }
     }
     // ── POINTS, AB, DP, CUT, AND SUBSTATIONS ──
@@ -961,45 +1044,43 @@ DATA_REGISTRY.forEach(reg => {
       const coords = feat.geometry.type==='Point' ? feat.geometry.coordinates : feat.geometry.coordinates[0];
       const ll = [coords[1],coords[0]];
       
+      // GPU CANVAS RENDERING for standard points (Eliminates thousands of heavy DOM elements)
       if(reg.type==='points' || reg.type==='fpoles'){
-        layer=L.marker(ll,{icon:mkIcon('#ffffff','#2196f3')}); 
-      } else if(reg.type==='ab'){
-        layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
-      } else if(reg.type==='dp'){
-        layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
+        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2});
       } else if(reg.type==='cut'){
-        layer=L.marker(ll,{icon:mkIcon('#ffffff','#000000')}); 
+        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 2});
+      } 
+      // Keep HTML markers for square icons and Substations
+      else if(reg.type==='ab' || reg.type==='dp'){
+        layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
       } else if (reg.type.startsWith('ss33')) {
         const ss33Html = `<div class="ss33-wrap"><div class="ss33-ring"></div><div class="ss33-core"><span class="ss33-bolt">⚡</span></div></div>`;
         layer=L.marker(ll,{ zIndexOffset: 1000, icon:L.divIcon({className:'', html:ss33Html, iconSize:[36,36], iconAnchor:[18,18]})});
-        const ssName = (props['NAME']||'33/11KV SS').replace('33/11KV ','').replace('33/11KV','').trim();
-        layer.bindTooltip(ssName,{permanent:true,direction:'top',offset:[0,-20],className:'ss-label'});
       } else if (reg.type.startsWith('eht')) {
         const ehtHtml = `<div class="eht-wrap"><div class="eht-rect"></div><div class="eht-core"><span class="eht-power">⚡</span><span class="eht-kv">EHT</span></div></div>`;
         layer=L.marker(ll,{ zIndexOffset: 1000, icon:L.divIcon({className:'', html:ehtHtml, iconSize:[40,28], iconAnchor:[20,14]})});
-        const ehtName = (props['EHT_SS_NAME']||props['NAME']||'EHT SS').replace('132 KV ','').replace('132KV ','').trim();
-        layer.bindTooltip(ehtName,{permanent:true,direction:'top',offset:[0,-16],className:'ss-label'});
       }
 
       if(layer){
-        layer.bindPopup(popupContent);
+        // LAZY POPUP BINDING
+        layer.bindPopup(() => popup(feat, reg));
 
-        // ADD VISIBLE POLE NUMBERS
+        // Extract Pole Number but DO NOT bind it yet (Zoom-based binding avoids DOM crash)
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
-        if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
-            layer.bindTooltip(String(poleNo).trim(), {
-                permanent: true,
-                direction: 'right',
-                className: 'pole-label',
-                offset: [6, 0]
-            });
+        if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
+            if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
+                poleNoStr = String(poleNo).trim();
+            } else {
+                // SS Labels can be bound normally since there are only a few of them
+                const ssName = String(poleNo).replace('33/11KV ','').replace('33/11KV','').replace('132 KV ','').replace('132KV ','').trim();
+                layer.bindTooltip(ssName, {permanent:true, direction:'top', offset:[0,-16], className:'ss-label'});
+            }
         }
       }
     }
 
     if(layer) {
-      allLayers.push({layer, reg, feederName, cable:cableType});
-      // Track per-feeder layers for status styling
+      allLayers.push({layer, reg, feederName, cable:cableType, poleNo: poleNoStr});
       if(!feederLayerMap[feederName]) feederLayerMap[feederName] = [];
       feederLayerMap[feederName].push({layer, reg, cable:cableType});
     }
@@ -1032,16 +1113,12 @@ if(allCoords.length > 0){
   try{ map.fitBounds(L.latLngBounds(allCoords),{padding:[60,60],maxZoom:17,animate:true}); }catch(e){}
 }
 
-// ══════════════════════════════════════════════════
-//  NEW: FEEDER FOCUS ZOOM TOOL
-// ══════════════════════════════════════════════════
+
 let focusedFeeder = null;
 
-// ── FEEDER STATUS ENGINE ──
 function setFeederStatus(fn, status, btnEl) {
   feederStatus[fn] = status;
 
-  // Update all buttons in THIS popup
   if(btnEl) {
     const bar = btnEl.closest('.fs-status-bar');
     if(bar) {
@@ -1052,7 +1129,6 @@ function setFeederStatus(fn, status, btnEl) {
     }
   }
 
-  // Restyle feeder lines on map
   const layers = feederLayerMap[fn] || [];
   layers.forEach(item => {
     if(!item.layer.setStyle) return;
@@ -1064,7 +1140,6 @@ function setFeederStatus(fn, status, btnEl) {
       item.layer.getElement && item.layer.getElement() && item.layer.getElement().classList.remove('feeder-breakdown');
     } else if(status === 'breakdown') {
       item.layer.setStyle({color:'#ff1744', weight:5, opacity:1, dashArray:'10 5'});
-      // CSS animation on the SVG path element
       if(item.layer._path) item.layer._path.classList.add('feeder-breakdown');
     } else if(status === 'idle') {
       item.layer.setStyle({color:'#9e9e9e', weight:3, opacity:0.55, dashArray:null});
@@ -1072,7 +1147,6 @@ function setFeederStatus(fn, status, btnEl) {
     }
   });
 
-  // Update inline panel buttons
   document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
@@ -1094,7 +1168,6 @@ function updateFeederBadges() {
 
 function focusFeeder(fn) {
   if(focusedFeeder === fn) {
-    // Unfocus and restore opacity
     focusedFeeder = null;
     allLayers.forEach(i => {
         if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) i.layer.setStyle({opacity: 0.9});
@@ -1107,7 +1180,6 @@ function focusFeeder(fn) {
   focusedFeeder = fn;
   const coords = [];
   
-  // Dim everything else, highlight target
   allLayers.forEach(i => {
     const isTarget = i.feederName === fn || i.reg.type.startsWith('ss') || i.reg.type.startsWith('eht');
     if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) {
@@ -1116,7 +1188,6 @@ function focusFeeder(fn) {
         i.layer.setOpacity(isTarget ? 1 : 0.2);
     }
     
-    // Collect coordinates for zooming
     if(i.feederName === fn && i.layer.getLatLngs) {
       const ll = i.layer.getLatLngs();
       if(ll.length) coords.push(...ll.flat());
@@ -1130,7 +1201,7 @@ function focusFeeder(fn) {
 }
 
 function toggleSingleFeeder(fn, idx, e) {
-  e.stopPropagation(); // Prevents triggering the focusFeeder click
+  e.stopPropagation(); 
   feederState[fn] = !feederState[fn];
   document.getElementById('ftog-'+idx).classList.toggle('off', !feederState[fn]);
   updateVisibility();
@@ -1155,13 +1226,13 @@ function buildFeederChecks(){
     row.innerHTML=`
       <div style="display:flex;align-items:center;gap:6px;width:100%">
         <div style="width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></div>
-        <span class="focus-txt" style="font-family:var(--sans);font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;min-width:0" title="Click to Focus" onclick="focusFeeder('${fn}')">${short}</span>
+        <span class="focus-txt" style="font-family:var(--sans);font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;min-width:0" title="Click to Focus" onclick="focusFeeder('${fnEsc}')">${short}</span>
         <div class="tog" id="ftog-${i}" style="flex-shrink:0" title="Toggle visibility" onclick="toggleSingleFeeder('${fnEsc}', ${i}, event)"></div>
       </div>
       <div style="display:flex;gap:3px;padding-left:16px;margin-top:3px;width:100%">
-        <button class="fi-btn fi-live" data-feeder="${fn}" onclick="setFeederStatus('${fnEsc}','live',this)">⚡ Live</button>
-        <button class="fi-btn fi-breakdown" data-feeder="${fn}" onclick="setFeederStatus('${fnEsc}','breakdown',this)">🔴 Down</button>
-        <button class="fi-btn fi-idle" data-feeder="${fn}" onclick="setFeederStatus('${fnEsc}','idle',this)">⏸ Idle</button>
+        <button class="fi-btn fi-live" data-feeder="${fnEsc}" onclick="setFeederStatus('${fnEsc}','live',this)">⚡ Live</button>
+        <button class="fi-btn fi-breakdown" data-feeder="${fnEsc}" onclick="setFeederStatus('${fnEsc}','breakdown',this)">🔴 Down</button>
+        <button class="fi-btn fi-idle" data-feeder="${fnEsc}" onclick="setFeederStatus('${fnEsc}','idle',this)">⏸ Idle</button>
       </div>`;
     container.appendChild(row);
   });
@@ -1238,9 +1309,6 @@ function togglePanel(){
   });
 })();
 
-// ══════════════════════════════════════════════════
-//  SEARCH WITH RADAR PING
-// ══════════════════════════════════════════════════
 document.getElementById('srchInput').addEventListener('input', function(e){
   const q=e.target.value.toLowerCase().trim();
   if(!q||q.length<2) return;
@@ -1254,17 +1322,13 @@ document.getElementById('srchInput').addEventListener('input', function(e){
     map.flyTo(ll, 19, {animate:true});
     found.layer.openPopup();
     
-    // Deploy Radar Ping marker
     const pingIcon = L.divIcon({className: 'radar-ping', iconSize: [0,0]});
     const pingMarker = L.marker(ll, {icon: pingIcon, zIndexOffset: 2000}).addTo(map);
-    
-    // Remove ping after 5 seconds to keep map clean
     setTimeout(() => map.removeLayer(pingMarker), 5000);
   }
 });
 
 map.on('mousemove',e=>{ document.getElementById('coords').textContent= e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5); });
-map.on('zoom',()=>{document.getElementById('zoomLvl').textContent=map.getZoom();});
 
 let _tt;
 function toast(msg,dur=2200){
@@ -1281,7 +1345,6 @@ function dismissLoader(){
   if(ov){ ov.classList.add('gone'); setTimeout(()=>ov.remove(),500); }
   map.invalidateSize();
   
-  // DEFERRED SEGMENT LOADING
   setTimeout(()=>{
     const s=document.createElement('script');
     s.src='data/Feeder_Segments_81.js';
@@ -1292,7 +1355,6 @@ function dismissLoader(){
             try {
               if(!feat.geometry) return;
               const p = feat.properties || {};
-              const popupContent = popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'});
               
               let pairType = String(p['Pair_Type'] || p['Type of Feeder'] || p['Feeder_Type'] || p['Feeder Type'] || '').trim().toUpperCase();
               let isOH = (pairType === 'OH' || pairType === 'OVERHEAD');
@@ -1314,9 +1376,11 @@ function dismissLoader(){
                     const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder_Name'] || p['Feeder_Name']);
                     e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
                 });
-                layer.bindPopup(popupContent);
                 
-                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments', cable: segCable});
+                // LAZY POPUP
+                layer.bindPopup(() => popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
+                
+                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments', cable: segCable, poleNo: null});
               }
             } catch(e){}
           });
@@ -1334,142 +1398,47 @@ setTimeout(()=>{
   dismissLoader();
   buildFeederChecks();
   updateCounts();
-  // Defer initial render to next idle frame — map shows faster
-  (window.requestIdleCallback || setTimeout)(()=>{
-    updateVisibility();
-    syncSSLabels();
-  }, {timeout:500});
+  updateVisibility(); 
   toast('James Street 33KV section loaded — '+allLayers.length+' features', 3000);
 }, 600);
 setTimeout(()=>dismissLoader(), 5000);
 
-// ── Zoom-based SS label visibility ──
-function syncSSLabels() {
+// ── ZOOM-BASED LABELS (HUGE PERFORMANCE BOOST) ──
+function syncLabels() {
   const z = map.getZoom();
-  const show = z >= 13;
+  const showPoleLabels = z >= 17; 
+  const showSSLabels = z >= 13;
+
   allLayers.forEach(item => {
-    const t = item.reg.type;
-    if(!t.startsWith('ss') && !t.startsWith('eht')) return;
-    if(!item.layer.getTooltip) return;
-    const tip = item.layer.getTooltip();
-    if(!tip) return;
-    if(show) {
-      if(!map.hasLayer(item.layer)) return;
-      item.layer.openTooltip && item.layer.openTooltip();
-    } else {
-      item.layer.closeTooltip && item.layer.closeTooltip();
+    // 1. Substation Labels
+    if(item.reg.type.startsWith('ss') || item.reg.type.startsWith('eht')) {
+        if(item.layer.getTooltip) {
+            const tip = item.layer.getTooltip();
+            if(tip) {
+                if(showSSLabels && map.hasLayer(item.layer)) item.layer.openTooltip && item.layer.openTooltip();
+                else item.layer.closeTooltip && item.layer.closeTooltip();
+            }
+        }
+    }
+    // 2. Pole Number Labels
+    if(item.poleNo) {
+        if(showPoleLabels && map.hasLayer(item.layer)) {
+            if(!item.layer.getTooltip()) {
+                item.layer.bindTooltip(item.poleNo, {permanent: true, direction: 'right', className: 'pole-label', offset: [6, 0]});
+            }
+        } else {
+            if(item.layer.getTooltip()) {
+                item.layer.unbindTooltip();
+            }
+        }
     }
   });
+  
+  document.getElementById('zoomLvl').textContent = z;
 }
-map.on('zoomend', syncSSLabels);
+map.on('zoomend', syncLabels);
 
 document.getElementById('loader').addEventListener('click', dismissLoader);
 </script>
-
-<!-- ── RIGHT SIDE BASEMAP TABS ── -->
-<div id="bm-tabs">
-  <div class="bm-tab active" id="bm-dark" onclick="setBM('dark')">🌑 DARK</div>
-  <div class="bm-tab"        id="bm-satellite" onclick="setBM('satellite')">🛰 SATELLITE</div>
-  <div class="bm-tab"        id="bm-street"   onclick="setBM('street')">🗺 STREET</div>
-  <div class="bm-tab"        id="bm-google"   onclick="setBM('google')">📍 GOOGLE</div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     RIGHT CONTROL PANEL
-══════════════════════════════════════════════ -->
-<div id="rpanel">
-
-  <!-- LAYER TYPES -->
-  <div class="rcard" id="rc-layers">
-    <div class="rcard-hd" onclick="toggleRcard('rc-layers')">
-      <span class="rcard-title">// LAYER TYPES</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
-    <div class="rcard-body">
-      <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
-        <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
-        <div class="lname">UG Lines</div>
-        <div class="lcnt" id="cnt-ug-lines">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
-        <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
-        <div class="lname">OH Lines</div>
-        <div class="lcnt" id="cnt-oh-lines">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
-        <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
-        <div class="lname">Cable Points</div>
-        <div class="lcnt" id="cnt-points">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')">
-        <div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div>
-        <div class="lname">DP Structures</div>
-        <div class="lcnt" id="cnt-dp">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')">
-        <div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div>
-        <div class="lname">AB Switches</div>
-        <div class="lcnt" id="cnt-ab">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')">
-        <div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div>
-        <div class="lname">Cut Points</div>
-        <div class="lcnt" id="cnt-cut">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
-        <div class="lswatch dot" style="background:#2196f3;border-color:#fff;border-radius:50%"></div>
-        <div class="lname">33/11KV SS</div>
-        <div class="lcnt" id="cnt-ss33">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
-        <div class="lswatch dot" style="background:#800080;border-color:#fff"></div>
-        <div class="lname">EHT SS</div>
-        <div class="lcnt" id="cnt-ehts">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
-        <div class="lswatch" style="background:#e8718d;height:2px"></div>
-        <div class="lname">Feeder Segments</div>
-        <div class="lcnt" id="cnt-fsegs">—</div>
-        <div class="tog"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- CABLE TYPE -->
-  <div class="rcard" id="rc-cable">
-    <div class="rcard-hd" onclick="toggleRcard('rc-cable')">
-      <span class="rcard-title">// CABLE TYPE</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
-    <div class="rcard-body">
-      <div class="pills">
-        <div class="pill active" id="fp-all" style="color:#00c8ff;border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.1)" onclick="setCableFilter('all')">ALL</div>
-        <div class="pill" id="fp-ug" style="color:#2196f3;border-color:rgba(33,150,243,.3)" onclick="setCableFilter('ug')">UG ONLY</div>
-        <div class="pill" id="fp-oh" style="color:#f44336;border-color:rgba(244,67,54,.3)" onclick="setCableFilter('oh')">OH ONLY</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- SECTION STATS -->
-  <div class="rcard" id="rc-stats">
-    <div class="rcard-hd" onclick="toggleRcard('rc-stats')">
-      <span class="rcard-title">// SECTION STATS</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
-    <div class="rcard-body">
-      <div class="strow"><span class="stlbl">Total Features</span><span class="stval" id="st-total">—</span></div>
-      <div class="strow"><span class="stlbl">Visible Features</span><span class="stval" id="st-visible">—</span></div>
-    </div>
-  </div>
-
-</div>
 </body>
 </html>
