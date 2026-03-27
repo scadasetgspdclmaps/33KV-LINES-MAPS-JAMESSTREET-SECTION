@@ -248,7 +248,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   line-height: 1.4;
 }
 .popup-table th {
-  font-weight: 600; /* Slightly bolder for readability */
+  font-weight: 600;
   width: 55%;
   padding-right: 12px;
   text-align: left;
@@ -325,6 +325,20 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
 }
 .ss-label.leaflet-tooltip-top::before{border-top-color:#333!important}
+
+/* Point Labels (Numbers on map) */
+.pole-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000 !important;
+  font-size: 11px !important;
+  font-family: 'Arial', sans-serif !important;
+  font-weight: bold !important;
+  /* Text shadow to make numbers readable on any basemap */
+  text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff !important;
+  padding: 0 !important;
+}
 </style>
 </head>
 <body>
@@ -451,8 +465,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 </div>
 
 <div id="legend">
-  <div class="leg"><div class="leg-l" style="background:blue;box-shadow:0 0 4px blue"></div>UG</div>
-  <div class="leg"><div class="leg-l" style="background:red;box-shadow:0 0 4px red"></div>OH</div>
+  <div class="leg"><div class="leg-l" style="background:#2196f3;box-shadow:0 0 4px #2196f3"></div>UG</div>
+  <div class="leg"><div class="leg-l" style="background:#f44336;box-shadow:0 0 4px #f44336"></div>OH</div>
   <div class="leg"><div class="leg-d" style="background:white;border:2px solid blue"></div>POINT</div>
   <div class="leg"><div class="leg-d" style="background:yellow;border:2px solid black"></div>DP</div>
   <div class="leg"><div class="leg-d" style="background:yellow;border:2px solid black"></div>AB SW</div>
@@ -477,9 +491,8 @@ const BM = {
   dark:      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}),
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:22}),
   street:    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:22}),
-  google:    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxZoom:22}) // Google Maps Street
+  google:    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxZoom:22}) 
 };
-// Ensure Dark theme is the default startup map
 let curBM='dark'; BM.dark.addTo(map);
 
 function setBM(name){
@@ -622,7 +635,7 @@ function updateVisibility() {
 }
 
 // ══════════════════════════════════════════════════
-//  WHITE DYNAMIC POPUP BUILDER (Using pure HTML Table)
+//  WHITE DYNAMIC POPUP BUILDER 
 // ══════════════════════════════════════════════════
 function popup(feat, regEntry){
   const p = feat.properties || {};
@@ -640,16 +653,12 @@ function popup(feat, regEntry){
   Object.keys(p).forEach(k => {
     if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
         let val = p[k];
-        
         if(!isNaN(val) && val.toString().indexOf('.') !== -1) {
             val = parseFloat(val).toFixed(3);
         }
-
-        // Auto append units based on key name
         if(k.toLowerCase().includes('length') || k.toLowerCase().includes('transitions')) val += ' km';
         if(k.toLowerCase().includes('total no.')) val += ' Nos';
 
-        // HTML Table Row
         rows += `<tr><th>${k}</th><td>${val}</td></tr>`;
     }
   });
@@ -683,7 +692,7 @@ DATA_REGISTRY.forEach(reg => {
   data.features.forEach(feat => {
     try {
     const props = feat.properties || {};
-    const cableType = props['Type of Feeder'] || reg.cable;
+    const cableType = props['Type of Feeder'] || props['Feeder_Type'] || reg.cable;
     const feederName = props['Feeder Name'] || reg.feeder;
     
     if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
@@ -700,21 +709,23 @@ DATA_REGISTRY.forEach(reg => {
           ? feat.geometry.coordinates.map(c=>[c[1],c[0]])
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
-        let color = '#0000ff'; 
+        // Explicitly set OH to Red and UG to Blue
+        let color = (cableType === 'OH' || cableType === 'Overhead') ? '#f44336' : '#2196f3'; 
         let dashArray = null;
         let weight = 4;
         let opacity = 0.8;
 
         if (reg.type.startsWith('fseg')) {
-            color = '#000'; 
-            dashArray = '5, 5';
-            weight = 3;
+            color = '#000'; // Black dashed overlay for segments
+            dashArray = '4, 6';
+            weight = 6;     // Thicker line so the segment data is easy to click
+            opacity = 0.6;  
         }
 
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
           {color, weight, opacity, dashArray, smoothFactor:1.5});
           
-        layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
+        layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{e.target.setStyle({weight,opacity})});
         layer.bindPopup(popupContent);
       }
@@ -746,6 +757,18 @@ DATA_REGISTRY.forEach(reg => {
 
       if(layer){
         layer.bindPopup(popupContent);
+        
+        // ADD VISIBLE POLE NUMBERS
+        let poleNo = props['Pole Number'] || props['Pole_No'] || props['id'] || '';
+        // Only show labels for actual point features (not substations) and only if it's a short string/number
+        if(poleNo && String(poleNo).length < 8 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
+            layer.bindTooltip(String(poleNo), {
+                permanent: true,
+                direction: 'right',
+                className: 'pole-label',
+                offset: [6, 0]
+            });
+        }
       }
     }
 
@@ -924,9 +947,11 @@ function dismissLoader(){
               const popupContent = popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'});
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
-                const layer=L.polyline(coords,{color:'#000000',weight:3,opacity:.8, dashArray: '5, 5'}); // Dashed black
-                layer.on('mouseover',e=>{e.target.setStyle({weight:5,opacity:1});});
-                layer.on('mouseout',e=>{e.target.setStyle({weight:3,opacity:.8});});
+                
+                // Thick, transparent black dashed line overlay to make segment clicking easy
+                const layer=L.polyline(coords,{color:'#000000',weight:6,opacity:.6, dashArray: '4, 6'}); 
+                layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
+                layer.on('mouseout',e=>{e.target.setStyle({weight:6,opacity:.6});});
                 layer.bindPopup(popupContent);
                 allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable:'-'}, feederName: p['Feeder_Name'] || 'Feeder Segments', cable: '-'});
               }
