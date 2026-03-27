@@ -130,11 +130,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 #srchInput:focus{width:250px;background:rgba(0,200,255,.08);border-color:var(--live)}
 #srchInput::placeholder{color:rgba(176,204,224,.35)}
 .srch-ic{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:rgba(176,204,224,.35);font-size:14px;pointer-events:none}
+
+/* FULLSCREEN BUTTON */
+.fs-btn{
+  color:var(--text);font-size:18px;cursor:pointer;padding:4px 8px;border-radius:5px;transition:0.2s;
+  display:flex;align-items:center;justify-content:center;
+}
+.fs-btn:hover{color:var(--live);background:rgba(0,200,255,0.1);transform:scale(1.05);}
+
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0;transition:all .3s}
 .chip-live{color:var(--ok);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)}
-.chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:blink .6s infinite}
-.chip-trip{color:var(--trip);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.1);animation:blink .4s infinite}
-@keyframes blink{50%{opacity:.35}}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -183,6 +188,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .ftog-row .tog { background:rgba(0,200,255,.28);border-color:var(--live) }
 .ftog-row .tog::after { transform:translateX(13px);background:var(--live) }
 
+/* FOCUS HIGHLIGHT HOVER EFFECT */
+.focus-txt { transition: 0.2s; }
+.focus-txt:hover { color: #fff !important; font-weight: bold; padding-left: 3px; }
+
 /* Basemap */
 .bmgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:2px}
 .bmbtn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:7px 5px;cursor:pointer;text-align:center;font-family:var(--sans);font-size:11px;color:var(--text);transition:all .2s}
@@ -210,6 +219,22 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 #ptab:hover{background:rgba(0,200,255,.15)}
 #ptab.off{left:0 !important;}
+
+/* ══════════════════════════════════════════════════
+   SEARCH RADAR PING ANIMATION
+   ══════════════════════════════════════════════════ */
+.radar-ping {
+  width: 40px; height: 40px;
+  background: rgba(255, 23, 68, 0.6);
+  border-radius: 50%;
+  animation: ping-anim 1.5s ease-out infinite;
+  pointer-events: none;
+  margin-left: -20px; margin-top: -20px;
+}
+@keyframes ping-anim {
+  0% { transform: scale(0); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
 
 /* ══════════════════════════════════════════════════
    CLEAN WHITE POPUP
@@ -356,6 +381,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
     <input id="srchInput" placeholder="Search pole no., feeder, cable point…" autocomplete="off"/>
     <span class="srch-ic">⌕</span>
   </div>
+  
+  <div class="fs-btn" onclick="toggleFullscreen()" title="Fullscreen Mode">⛶</div>
+  
   <div class="chip chip-live" id="chipStatus">● LIVE</div>
 </div>
 
@@ -364,7 +392,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 <div id="panel">
   <div class="psec">
     <div class="psec-t" style="display:flex;justify-content:space-between;align-items:center">
-      // FEEDERS
+      // FEEDERS (Click Name to Focus)
       <div>
         <span style="font-family:var(--sans);font-size:10px;color:rgba(0,200,255,.6);cursor:pointer;font-weight:600" onclick="toggleAllFeeders(true)">ALL</span>
         <span style="font-family:var(--sans);font-size:10px;color:rgba(0,200,255,.6);cursor:pointer;margin-left:6px;font-weight:600" onclick="toggleAllFeeders(false)">NONE</span>
@@ -477,7 +505,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 <script>
 // ══════════════════════════════════════════════════
-//  CORE SETUP
+//  CORE SETUP & FULLSCREEN
 // ══════════════════════════════════════════════════
 const map = L.map('map',{
   center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:true,
@@ -486,6 +514,16 @@ const map = L.map('map',{
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      toast(`Fullscreen error: ${err.message}`);
+    });
+  } else {
+    if (document.exitFullscreen) document.exitFullscreen();
+  }
+}
 
 const BM = {
   dark:      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}),
@@ -641,7 +679,7 @@ function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
   
-  // Notice that 'popup' is NO LONGER in this array
+  // Hide messy internal keys
   const hideKeys = ['id', 'layer', 'path', 'fid'];
 
   // Add the ID to the top left if available
@@ -654,10 +692,10 @@ function popup(feat, regEntry){
     if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
         let val = p[k];
 
-        // Custom handling to safely format your Substation "Popup" text
+        // Ensure "Popup" data renders cleanly at the bottom
         if (k.toLowerCase() === 'popup') {
             rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Details:</strong><br>${val}</td></tr>`;
-            return; // skip the regular table row builder
+            return; 
         }
 
         if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) {
@@ -719,7 +757,7 @@ DATA_REGISTRY.forEach(reg => {
           ? feat.geometry.coordinates.map(c=>[c[1],c[0]])
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
-        let color = isOH ? '#f44336' : '#2196f3'; // OH gets Red, UG gets Blue
+        let color = isOH ? '#f44336' : '#2196f3'; 
         let weight = 4;
         let opacity = 0.9;
 
@@ -727,7 +765,11 @@ DATA_REGISTRY.forEach(reg => {
           {color, weight, opacity, smoothFactor:1.5});
           
         layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
-        layer.on('mouseout', e=>{e.target.setStyle({weight,opacity})});
+        layer.on('mouseout', e=>{
+            // Respect focus state opacity
+            const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
+            e.target.setStyle({weight:4, opacity: isFocused ? 0.15 : 0.9});
+        });
         layer.bindPopup(popupContent);
       }
     }
@@ -804,6 +846,56 @@ if(allCoords.length > 0){
   try{ map.fitBounds(L.latLngBounds(allCoords),{padding:[60,60],maxZoom:17,animate:true}); }catch(e){}
 }
 
+// ══════════════════════════════════════════════════
+//  NEW: FEEDER FOCUS ZOOM TOOL
+// ══════════════════════════════════════════════════
+let focusedFeeder = null;
+
+function focusFeeder(fn) {
+  if(focusedFeeder === fn) {
+    // Unfocus and restore opacity
+    focusedFeeder = null;
+    allLayers.forEach(i => {
+        if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) i.layer.setStyle({opacity: 0.9});
+        else if (i.layer.setOpacity) i.layer.setOpacity(1);
+    });
+    toast("Focus cleared");
+    return;
+  }
+  
+  focusedFeeder = fn;
+  const coords = [];
+  
+  // Dim everything else, highlight target
+  allLayers.forEach(i => {
+    const isTarget = i.feederName === fn || i.reg.type.startsWith('ss') || i.reg.type.startsWith('eht');
+    if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) {
+        i.layer.setStyle({opacity: isTarget ? 1.0 : 0.15});
+    } else if (i.layer.setOpacity) {
+        i.layer.setOpacity(isTarget ? 1 : 0.2);
+    }
+    
+    // Collect coordinates for zooming
+    if(i.feederName === fn && i.layer.getLatLngs) {
+      const ll = i.layer.getLatLngs();
+      if(ll.length) coords.push(...ll.flat());
+    }
+  });
+  
+  if(coords.length > 0) {
+    map.flyToBounds(L.latLngBounds(coords), {padding:[50,50], animate:true, duration: 1.0});
+  }
+  toast(`Focused on: ${fn.split('→')[1]?.trim() || fn}`);
+}
+
+function toggleSingleFeeder(fn, idx, e) {
+  e.stopPropagation(); // Prevents triggering the focusFeeder click
+  feederState[fn] = !feederState[fn];
+  document.getElementById('ftog-'+idx).classList.toggle('off', !feederState[fn]);
+  updateVisibility();
+  toast((feederState[fn] ? 'Showing ' : 'Hidden ') + fn.substring(0,15));
+}
+
 function buildFeederChecks(){
   const container = document.getElementById('feederChecks');
   if(!container) return;
@@ -819,15 +911,9 @@ function buildFeederChecks(){
     row.className = 'ftog-row';
     row.innerHTML=`
       <div style="width:14px;height:14px;border-radius:3px;background:${color};opacity:.9;flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></div>
-      <span style="font-family:var(--sans);font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${fn}">${short}</span>
-      <div class="tog" id="ftog-${i}" style="flex-shrink:0"></div>`;
+      <span class="focus-txt" style="font-family:var(--sans);font-size:12px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer" title="Click to Focus on map" onclick="focusFeeder('${fn}')">${short}</span>
+      <div class="tog" id="ftog-${i}" style="flex-shrink:0" title="Toggle visibility" onclick="toggleSingleFeeder('${fn}', ${i}, event)"></div>`;
     
-    row.onclick = () => {
-      feederState[fn] = !feederState[fn];
-      row.querySelector('.tog').classList.toggle('off', !feederState[fn]);
-      updateVisibility();
-      toast((feederState[fn] ? 'Showing ' : 'Hidden ') + short);
-    };
     container.appendChild(row);
   });
 }
@@ -903,6 +989,9 @@ function togglePanel(){
   });
 })();
 
+// ══════════════════════════════════════════════════
+//  SEARCH WITH RADAR PING
+// ══════════════════════════════════════════════════
 document.getElementById('srchInput').addEventListener('input', function(e){
   const q=e.target.value.toLowerCase().trim();
   if(!q||q.length<2) return;
@@ -910,9 +999,18 @@ document.getElementById('srchInput').addEventListener('input', function(e){
     const p = i.layer.feature?.properties || i.layer.options || {};
     return JSON.stringify(p).toLowerCase().includes(q);
   });
+  
   if (found && found.layer.getLatLng) {
-    map.flyTo(found.layer.getLatLng(), 19, {animate:true});
+    const ll = found.layer.getLatLng();
+    map.flyTo(ll, 19, {animate:true});
     found.layer.openPopup();
+    
+    // Deploy Radar Ping marker
+    const pingIcon = L.divIcon({className: 'radar-ping', iconSize: [0,0]});
+    const pingMarker = L.marker(ll, {icon: pingIcon, zIndexOffset: 2000}).addTo(map);
+    
+    // Remove ping after 5 seconds to keep map clean
+    setTimeout(() => map.removeLayer(pingMarker), 5000);
   }
 });
 
@@ -963,7 +1061,10 @@ function dismissLoader(){
                 const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9});
                 
                 layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
-                layer.on('mouseout',e=>{e.target.setStyle({weight:6,opacity:0.9});});
+                layer.on('mouseout',e=>{
+                    const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder_Name'] || p['Feeder_Name']);
+                    e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
+                });
                 layer.bindPopup(popupContent);
                 
                 allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments', cable: segCable});
