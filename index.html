@@ -569,19 +569,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 /* Custom Map Labels */
 .ss-label{
-  background:rgba(255,255,255,.9)!important;
-  border:1px solid #333!important;
-  border-radius:5px!important;
-  color:#333!important;
-  font-family:'Arial',sans-serif!important;
-  font-weight:bold;
-  font-size:11px!important;
-  letter-spacing:.5px!important;
-  padding:3px 7px!important;
+  background:rgba(9,22,37,.88)!important;
+  border:1px solid rgba(0,200,255,.35)!important;
+  border-radius:4px!important;
+  color:#00c8ff!important;
+  font-family:'Share Tech Mono',monospace!important;
+  font-weight:normal;
+  font-size:9px!important;
+  letter-spacing:.3px!important;
+  padding:2px 5px!important;
   white-space:nowrap!important;
-  box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.4)!important;
+  opacity:0.9!important;
+  max-width:120px!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
 }
-.ss-label.leaflet-tooltip-top::before{border-top-color:#333!important}
+.ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
 </style>
 </head>
 <body>
@@ -968,11 +972,13 @@ DATA_REGISTRY.forEach(reg => {
       } else if (reg.type.startsWith('ss33')) {
         const ss33Html = `<div class="ss33-wrap"><div class="ss33-ring"></div><div class="ss33-core"><span class="ss33-bolt">⚡</span></div></div>`;
         layer=L.marker(ll,{ zIndexOffset: 1000, icon:L.divIcon({className:'', html:ss33Html, iconSize:[36,36], iconAnchor:[18,18]})});
-        layer.bindTooltip(props['NAME']||'33/11KV SS',{permanent:true,direction:'top',offset:[0,-20],className:'ss-label'});
+        const ssName = (props['NAME']||'33/11KV SS').replace('33/11KV ','').replace('33/11KV','').trim();
+        layer.bindTooltip(ssName,{permanent:true,direction:'top',offset:[0,-20],className:'ss-label'});
       } else if (reg.type.startsWith('eht')) {
         const ehtHtml = `<div class="eht-wrap"><div class="eht-rect"></div><div class="eht-core"><span class="eht-power">⚡</span><span class="eht-kv">EHT</span></div></div>`;
         layer=L.marker(ll,{ zIndexOffset: 1000, icon:L.divIcon({className:'', html:ehtHtml, iconSize:[40,28], iconAnchor:[20,14]})});
-        layer.bindTooltip(props['EHT_SS_NAME']||props['NAME']||'EHT SS',{permanent:true,direction:'top',offset:[0,-16],className:'ss-label'});
+        const ehtName = (props['EHT_SS_NAME']||props['NAME']||'EHT SS').replace('132 KV ','').replace('132KV ','').trim();
+        layer.bindTooltip(ehtName,{permanent:true,direction:'top',offset:[0,-16],className:'ss-label'});
       }
 
       if(layer){
@@ -1328,18 +1334,42 @@ setTimeout(()=>{
   dismissLoader();
   buildFeederChecks();
   updateCounts();
-  updateVisibility(); 
-  toast('James Street 33KV section loaded', 3000);
-}, 800);
+  // Defer initial render to next idle frame — map shows faster
+  (window.requestIdleCallback || setTimeout)(()=>{
+    updateVisibility();
+    syncSSLabels();
+  }, {timeout:500});
+  toast('James Street 33KV section loaded — '+allLayers.length+' features', 3000);
+}, 600);
 setTimeout(()=>dismissLoader(), 5000);
+
+// ── Zoom-based SS label visibility ──
+function syncSSLabels() {
+  const z = map.getZoom();
+  const show = z >= 13;
+  allLayers.forEach(item => {
+    const t = item.reg.type;
+    if(!t.startsWith('ss') && !t.startsWith('eht')) return;
+    if(!item.layer.getTooltip) return;
+    const tip = item.layer.getTooltip();
+    if(!tip) return;
+    if(show) {
+      if(!map.hasLayer(item.layer)) return;
+      item.layer.openTooltip && item.layer.openTooltip();
+    } else {
+      item.layer.closeTooltip && item.layer.closeTooltip();
+    }
+  });
+}
+map.on('zoomend', syncSSLabels);
+
 document.getElementById('loader').addEventListener('click', dismissLoader);
 </script>
 
 <!-- ── RIGHT SIDE BASEMAP TABS ── -->
 <div id="bm-tabs">
-  <div class="bm-tab active" id="bm-dark" class="bm-tab active"     onclick="setBM('dark')">🌑 DARK</div>
+  <div class="bm-tab active" id="bm-dark" onclick="setBM('dark')">🌑 DARK</div>
   <div class="bm-tab"        id="bm-satellite" onclick="setBM('satellite')">🛰 SATELLITE</div>
-  <div class="bm-tab"        id="bm-hybrid"   onclick="setBM('hybrid')">🌍 HYBRID</div>
   <div class="bm-tab"        id="bm-street"   onclick="setBM('street')">🗺 STREET</div>
   <div class="bm-tab"        id="bm-google"   onclick="setBM('google')">📍 GOOGLE</div>
 </div>
