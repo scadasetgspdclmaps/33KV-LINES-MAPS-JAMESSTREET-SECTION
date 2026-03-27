@@ -215,12 +215,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .leaflet-popup-content-wrapper{
   background:#0c1d2e!important;border:1px solid rgba(0,200,255,.22)!important;
   border-radius:14px!important;box-shadow:0 8px 40px rgba(0,0,0,.6)!important;
-  padding:0!important;overflow:hidden!important;min-width:260px;max-width:340px;
+  padding:0!important;overflow:hidden;min-width:260px;max-width:320px;
 }
 .leaflet-popup-tip-container{display:none}
-.leaflet-popup-close-button{color:rgba(176,204,224,.45)!important;font-size:17px!important;top:10px!important;right:11px!important;background:transparent!important}
+.leaflet-popup-close-button{color:rgba(176,204,224,.45)!important;font-size:17px!important;top:10px!important;right:11px!important}
 .leaflet-popup-close-button:hover{color:var(--live)!important}
-.leaflet-popup-content{margin:0!important;width:auto!important;}
+.leaflet-popup-content{margin:0!important}
 .pc-bar{height:4px}
 .pc-hd{padding:13px 38px 9px 15px;border-bottom:1px solid rgba(0,200,255,.1)}
 .pc-tag{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.5);margin-bottom:3px}
@@ -230,8 +230,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .pc-bd::-webkit-scrollbar-thumb { background: rgba(0,200,255,0.3); border-radius: 2px; }
 .pc-row{display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:10px}
 .pc-row:last-child{border-bottom:none}
-.pc-k{font-family:var(--sans);font-size:12px;color:rgba(176,204,224,.5);white-space:nowrap;flex-shrink:0;max-width:48%;line-height:1.3;overflow:hidden;text-overflow:ellipsis}
-.pc-v{font-family:var(--mono);font-size:11px;color:#e0eeff;text-align:right;flex:1;word-break:break-word;overflow-wrap:anywhere;min-width:0;line-height:1.3}
+.pc-k{font-family:var(--sans);font-size:12px;color:rgba(176,204,224,.5);white-space:nowrap;flex-shrink:0;max-width:45%;line-height:1.3;overflow:hidden;text-overflow:ellipsis}
+.pc-v{font-family:var(--mono);font-size:11px;color:#e0eeff;text-align:right;flex:1;min-width:0;word-break:break-all;overflow-wrap:anywhere;line-height:1.3}
 .pc-acts{display:flex;gap:6px;padding:0 15px 13px}
 .pc-btn{flex:1;padding:7px;background:rgba(0,200,255,.08);border:1px solid rgba(0,200,255,.18);border-radius:8px;color:var(--live);font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;text-align:center;transition:all .2s}
 .pc-btn:hover{background:rgba(0,200,255,.18);transform:scale(1.03)}
@@ -687,7 +687,7 @@ DATA_REGISTRY.forEach(reg => {
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
         const color = (reg.type.startsWith('fseg')) ? '#e8718d' : (cableType==='UG'?'#2196f3':'#f44336');
-        const weight = (reg.type.startsWith('fseg')) ? 5 : 4;
+        const weight = (reg.type.startsWith('fseg')) ? 5 : 4; // Make segments thick enough to click
         const opacity = (reg.type.startsWith('fseg')) ? 0.8 : 0.9;
         
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
@@ -697,14 +697,16 @@ DATA_REGISTRY.forEach(reg => {
         layer.on('mouseout', e=>{e.target.setStyle({weight,opacity})});
         layer.bindPopup(popupContent);
       } else if(feat.geometry.type==='Point' && reg.type==='lines'){
-        // UG feeders exported as pole-by-pole Points — bucket and connect after loop
-        if(!window._lineBuckets) window._lineBuckets = {};
-        if(!window._lineBuckets[reg.varName]){
-          window._lineBuckets[reg.varName] = {reg, cable:cableType, feederName, points:[]};
+        // UG feeder files export Point geometry (pole-by-pole) instead of LineString
+        // Collect into buckets — connected into polylines in post-process below
+        if(!window._ugBuckets) window._ugBuckets = {};
+        if(!window._ugBuckets[reg.varName]){
+          window._ugBuckets[reg.varName] = {reg, cable:cableType, feederName, points:[]};
         }
-        const poleNum = parseInt(props['Pole Number']||'0')||0;
-        const ll = [feat.geometry.coordinates[1], feat.geometry.coordinates[0]];
-        window._lineBuckets[reg.varName].points.push({ll, poleNum, feat});
+        const pNum = parseInt(props['Pole Number']||'0')||0;
+        const ptll = [feat.geometry.coordinates[1], feat.geometry.coordinates[0]];
+        window._ugBuckets[reg.varName].points.push({ll:ptll, poleNum:pNum, feat});
+        // layer stays null — handled in post-process
       }
     }
     // ── POINTS, AB, DP, CUT, AND SUBSTATIONS ──
@@ -747,67 +749,63 @@ DATA_REGISTRY.forEach(reg => {
   } catch(e){ console.warn('Layer error:', reg.varName, e); }
 });
 
-// ══════════════════════════════════════════════════
-//  POLE NUMBER LABELS (shown on map like TGAIms, zoom >= 17)
-// ══════════════════════════════════════════════════
-const poleLabels = [];
-DATA_REGISTRY.forEach(reg => {
-  const data = window[reg.varName];
+// ── POST-PROCESS: Connect UG pole-point buckets into polylines ──
+if(window._ugBuckets){
+  Object.values(window._ugBuckets).forEach(function(bucket){
+    if(bucket.points.length < 2) return;
+    bucket.points.sort(function(a,b){ return a.poleNum - b.poleNum; });
+    var coords = bucket.points.map(function(p){ return p.ll; });
+    var color = bucket.cable === 'UG' ? '#2196f3' : '#f44336';
+    var weight = 4, opacity = 0.9;
+    // Glow halo
+    var halo = L.polyline(coords, {color:color, weight:11, opacity:0.12, smoothFactor:2});
+    allLayers.push({layer:halo, reg:bucket.reg, feederName:bucket.feederName, cable:bucket.cable});
+    // Main line
+    var ln = L.polyline(coords, {color:color, weight:weight, opacity:opacity, smoothFactor:1.5});
+    var firstFeat = bucket.points[0].feat;
+    var pc = popup(firstFeat, bucket.reg);
+    ln.on('mouseover', function(e){ e.target.setStyle({weight:8,opacity:1}); ln.bringToFront(); });
+    ln.on('mouseout',  function(e){ e.target.setStyle({weight:weight,opacity:opacity}); });
+    ln.bindPopup(pc);
+    allLayers.push({layer:ln, reg:bucket.reg, feederName:bucket.feederName, cable:bucket.cable});
+  });
+}
+
+// ── POLE NUMBER LABELS (visible at zoom >= 17, like TGAIms) ──
+const _poleLabels = [];
+DATA_REGISTRY.forEach(function(reg){
+  var data = window[reg.varName];
   if(!data || !data.features) return;
-  data.features.forEach(feat => {
-    const p = feat.properties || {};
-    const poleNum = p['Pole Number'];
-    if(!poleNum) return;
-    if(!feat.geometry) return;
-    let coords = null;
-    if(feat.geometry.type === 'Point') coords = feat.geometry.coordinates;
-    else if(feat.geometry.type === 'MultiPoint') coords = feat.geometry.coordinates[0];
+  data.features.forEach(function(feat){
+    var p = feat.properties || {};
+    var poleNum = p['Pole Number'];
+    if(!poleNum || !feat.geometry) return;
+    var coords = null;
+    if(feat.geometry.type==='Point') coords = feat.geometry.coordinates;
+    else if(feat.geometry.type==='MultiPoint') coords = feat.geometry.coordinates[0];
     if(!coords) return;
-    const ll = [coords[1], coords[0]];
-    const lbl = L.marker(ll, {
+    var ll = [coords[1], coords[0]];
+    var lbl = L.marker(ll, {
       icon: L.divIcon({
-        className: '',
-        html: `<div style="font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:#111;text-shadow:0 0 3px #fff,0 0 5px #fff,1px 1px 0 #fff,-1px -1px 0 #fff;white-space:nowrap;pointer-events:none;transform:translate(-50%,-18px);position:absolute;line-height:1">${poleNum}</div>`,
+        className:'',
+        html:'<div style="font-family:Rajdhani,sans-serif;font-size:10px;font-weight:700;color:#111;text-shadow:0 0 3px #fff,0 0 5px #fff,1px 1px 0 #fff,-1px -1px 0 #fff;white-space:nowrap;pointer-events:none;transform:translate(-50%,-18px);position:absolute;line-height:1">'+poleNum+'</div>',
         iconSize:[0,0], iconAnchor:[0,0]
       }),
-      interactive: false,
-      zIndexOffset: -200
+      interactive:false, zIndexOffset:-200
     });
-    poleLabels.push(lbl);
+    _poleLabels.push(lbl);
   });
 });
-
-// Show/hide labels based on zoom
-function syncPoleLabels() {
-  const show = map.getZoom() >= 17;
-  poleLabels.forEach(lbl => {
+function _syncPoleLabels(){
+  var show = map.getZoom() >= 17;
+  _poleLabels.forEach(function(lbl){
     if(show && !map.hasLayer(lbl)) map.addLayer(lbl);
     if(!show && map.hasLayer(lbl)) map.removeLayer(lbl);
   });
 }
-map.on('zoomend', syncPoleLabels);
-syncPoleLabels(); // run once on load
-
-// ── POST-PROCESS: Connect UG point-based feeder data into polylines ──
-if(window._lineBuckets){
-  Object.values(window._lineBuckets).forEach(bucket => {
-    if(bucket.points.length < 2) return;
-    bucket.points.sort((a,b) => a.poleNum - b.poleNum);
-    const coords = bucket.points.map(p => p.ll);
-    const color = bucket.cable === 'UG' ? '#2196f3' : '#f44336';
-    const weight = 4, opacity = 0.9;
-    // Glow halo
-    const halo = L.polyline(coords, {color, weight:10, opacity:0.13, smoothFactor:2});
-    allLayers.push({layer:halo, reg:bucket.reg, feederName:bucket.feederName, cable:bucket.cable});
-    // Main line
-    const ln = L.polyline(coords, {color, weight, opacity, smoothFactor:1.5});
-    const popupContent = popup(bucket.points[0].feat, bucket.reg);
-    ln.on('mouseover', e=>{e.target.setStyle({weight:8,opacity:1});ln.bringToFront();});
-    ln.on('mouseout',  e=>{e.target.setStyle({weight,opacity});});
-    ln.bindPopup(popupContent);
-    allLayers.push({layer:ln, reg:bucket.reg, feederName:bucket.feederName, cable:bucket.cable});
-  });
-}
+map.on('zoomend', _syncPoleLabels);
+// run after initial render
+setTimeout(_syncPoleLabels, 1200);
 
 // Calculate statistics dynamically
 function updateCounts() {
