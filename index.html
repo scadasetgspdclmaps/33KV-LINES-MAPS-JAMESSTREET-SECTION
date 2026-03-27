@@ -215,12 +215,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .leaflet-popup-content-wrapper{
   background:#0c1d2e!important;border:1px solid rgba(0,200,255,.22)!important;
   border-radius:14px!important;box-shadow:0 8px 40px rgba(0,0,0,.6)!important;
-  padding:0!important;overflow:hidden;min-width:260px;
+  padding:0!important;overflow:visible!important;min-width:260px;
 }
 .leaflet-popup-tip-container{display:none}
-.leaflet-popup-close-button{color:rgba(176,204,224,.45)!important;font-size:17px!important;top:10px!important;right:11px!important}
+.leaflet-popup-close-button{color:rgba(176,204,224,.45)!important;font-size:17px!important;top:10px!important;right:11px!important;background:transparent!important}
 .leaflet-popup-close-button:hover{color:var(--live)!important}
-.leaflet-popup-content{margin:0!important}
+.leaflet-popup-content{margin:0!important;overflow:hidden;border-radius:14px;}
 .pc-bar{height:4px}
 .pc-hd{padding:13px 38px 9px 15px;border-bottom:1px solid rgba(0,200,255,.1)}
 .pc-tag{font-family:var(--mono);font-size:8px;letter-spacing:2px;color:rgba(0,200,255,.5);margin-bottom:3px}
@@ -400,10 +400,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   <div class="psec">
     <div class="psec-t">// BASEMAP</div>
     <div class="bmgrid">
-      <div class="bmbtn active" id="bm-dark" onclick="setBM('dark')">🌑 Dark</div>
+      <div class="bmbtn" id="bm-dark" onclick="setBM('dark')">🌑 Dark</div>
       <div class="bmbtn" id="bm-satellite" onclick="setBM('satellite')">🛰️ Satellite</div>
       <div class="bmbtn" id="bm-street" onclick="setBM('street')">🗺️ Street</div>
-      <div class="bmbtn" id="bm-hybrid" onclick="setBM('hybrid')">🏙️ Hybrid</div>
+      <div class="bmbtn active" id="bm-hybrid" onclick="setBM('hybrid')">🏙️ Hybrid</div>
     </div>
   </div>
 
@@ -449,7 +449,7 @@ const BM = {
   street:    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:22}),
   hybrid:    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:22}),
 };
-let curBM='dark'; BM.dark.addTo(map);
+let curBM='hybrid'; BM.hybrid.addTo(map);
 
 function setBM(name){
   map.removeLayer(BM[curBM]); BM[name].addTo(map); BM[name].bringToBack();
@@ -737,6 +737,47 @@ DATA_REGISTRY.forEach(reg => {
   });
   } catch(e){ console.warn('Layer error:', reg.varName, e); }
 });
+
+// ══════════════════════════════════════════════════
+//  POLE NUMBER LABELS (shown on map like TGAIms, zoom >= 17)
+// ══════════════════════════════════════════════════
+const poleLabels = [];
+DATA_REGISTRY.forEach(reg => {
+  const data = window[reg.varName];
+  if(!data || !data.features) return;
+  data.features.forEach(feat => {
+    const p = feat.properties || {};
+    const poleNum = p['Pole Number'];
+    if(!poleNum) return;
+    if(!feat.geometry) return;
+    let coords = null;
+    if(feat.geometry.type === 'Point') coords = feat.geometry.coordinates;
+    else if(feat.geometry.type === 'MultiPoint') coords = feat.geometry.coordinates[0];
+    if(!coords) return;
+    const ll = [coords[1], coords[0]];
+    const lbl = L.marker(ll, {
+      icon: L.divIcon({
+        className: '',
+        html: `<div style="font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;color:#111;text-shadow:0 0 3px #fff,0 0 5px #fff,1px 1px 0 #fff,-1px -1px 0 #fff;white-space:nowrap;pointer-events:none;transform:translate(-50%,-18px);position:absolute;line-height:1">${poleNum}</div>`,
+        iconSize:[0,0], iconAnchor:[0,0]
+      }),
+      interactive: false,
+      zIndexOffset: -200
+    });
+    poleLabels.push(lbl);
+  });
+});
+
+// Show/hide labels based on zoom
+function syncPoleLabels() {
+  const show = map.getZoom() >= 17;
+  poleLabels.forEach(lbl => {
+    if(show && !map.hasLayer(lbl)) map.addLayer(lbl);
+    if(!show && map.hasLayer(lbl)) map.removeLayer(lbl);
+  });
+}
+map.on('zoomend', syncPoleLabels);
+syncPoleLabels(); // run once on load
 
 // Calculate statistics dynamically
 function updateCounts() {
