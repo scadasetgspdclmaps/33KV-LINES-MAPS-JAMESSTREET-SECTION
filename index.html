@@ -195,6 +195,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .focus-txt { transition: 0.2s; }
 .focus-txt:hover { color: #fff !important; font-weight: bold; padding-left: 3px; }
 
+/* Basemap */
+.bmgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:2px}
+.bmbtn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:7px 5px;cursor:pointer;text-align:center;font-family:var(--sans);font-size:11px;color:var(--text);transition:all .2s}
+.bmbtn:hover{background:rgba(0,200,255,.08);border-color:var(--live);transform:scale(1.02)}
+.bmbtn.active{background:rgba(0,200,255,.15);border-color:var(--live);color:var(--live);font-weight:600}
+
 /* Pills */
 .pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .pill{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:4px 9px;border-radius:13px;cursor:pointer;border:1px solid;transition:all .2s;user-select:none}
@@ -943,6 +949,12 @@ function popup(feat, regEntry){
   
   const hideKeys = ['id', 'layer', 'path', 'fid'];
 
+  // FIX: Hide the auto-generated 'popup' column ONLY for lines/segments to prevent double data.
+  // We keep it for Substations so your custom notes still appear.
+  if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
+      hideKeys.push('popup');
+  }
+
   let headerId = '';
   if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) {
     headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID'] || p['Pole Number']}</div>`;
@@ -953,7 +965,7 @@ function popup(feat, regEntry){
         let val = p[k];
 
         if (k.toLowerCase() === 'popup') {
-            rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Details:</strong><br>${val}</td></tr>`;
+            rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Notes:</strong><br>${val}</td></tr>`;
             return; 
         }
 
@@ -973,7 +985,7 @@ function popup(feat, regEntry){
     const cur = feederStatus[fn] || 'live';
     statusBar = `<div class="fs-status-bar">
       <div class="fs-status-btn${cur==='live'?' active-live':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','live',this)">⚡ LIVE</div>
-      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 BREAKDOWN</div>
+      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
   }
@@ -1035,7 +1047,7 @@ DATA_REGISTRY.forEach(reg => {
             e.target.setStyle({weight:4, opacity: isFocused ? 0.15 : 0.9});
         });
         
-        // LAZY POPUP BINDING - Huge performance boost!
+        // LAZY POPUP BINDING
         layer.bindPopup(() => popup(feat, reg));
       }
     }
@@ -1044,7 +1056,7 @@ DATA_REGISTRY.forEach(reg => {
       const coords = feat.geometry.type==='Point' ? feat.geometry.coordinates : feat.geometry.coordinates[0];
       const ll = [coords[1],coords[0]];
       
-      // GPU CANVAS RENDERING for standard points (Eliminates thousands of heavy DOM elements)
+      // GPU CANVAS RENDERING for standard points
       if(reg.type==='points' || reg.type==='fpoles'){
         layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2});
       } else if(reg.type==='cut'){
@@ -1071,7 +1083,7 @@ DATA_REGISTRY.forEach(reg => {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
                 poleNoStr = String(poleNo).trim();
             } else {
-                // SS Labels can be bound normally since there are only a few of them
+                // SS Labels can be bound normally
                 const ssName = String(poleNo).replace('33/11KV ','').replace('33/11KV','').replace('132 KV ','').replace('132KV ','').trim();
                 layer.bindTooltip(ssName, {permanent:true, direction:'top', offset:[0,-16], className:'ss-label'});
             }
@@ -1345,6 +1357,7 @@ function dismissLoader(){
   if(ov){ ov.classList.add('gone'); setTimeout(()=>ov.remove(),500); }
   map.invalidateSize();
   
+  // DEFERRED SEGMENT LOADING
   setTimeout(()=>{
     const s=document.createElement('script');
     s.src='data/Feeder_Segments_81.js';
@@ -1398,12 +1411,16 @@ setTimeout(()=>{
   dismissLoader();
   buildFeederChecks();
   updateCounts();
-  updateVisibility(); 
+  // Defer initial render to next idle frame — map shows faster
+  (window.requestIdleCallback || setTimeout)(()=>{
+    updateVisibility();
+    syncLabels();
+  }, {timeout:500});
   toast('James Street 33KV section loaded — '+allLayers.length+' features', 3000);
 }, 600);
 setTimeout(()=>dismissLoader(), 5000);
 
-// ── ZOOM-BASED LABELS (HUGE PERFORMANCE BOOST) ──
+// ── ZOOM-BASED LABELS ──
 function syncLabels() {
   const z = map.getZoom();
   const showPoleLabels = z >= 17; 
