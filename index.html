@@ -410,7 +410,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 /* ── FEEDER STATUS LEGEND bottom ── */
 .status-legend {
-  position:fixed;bottom:46px;right:14px;z-index:800;
+  position:fixed;bottom:46px;right:58px;z-index:800;
   background:rgba(13,27,42,.92);backdrop-filter:blur(10px);
   border:1px solid var(--border);border-radius:10px;
   padding:8px 12px;font-family:var(--mono);font-size:9px;
@@ -418,6 +418,98 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .sl-row{display:flex;align-items:center;gap:6px;color:var(--text)}
 .sl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+
+/* ── RIGHT SIDE BASEMAP TABS ── */
+#bm-tabs {
+  position:fixed;
+  top:50%;
+  right:0;
+  transform:translateY(-50%);
+  z-index:950;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.bm-tab {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  background: linear-gradient(180deg,#0a1828f0,#0d1f33f0);
+  border: 1px solid var(--border);
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+  padding: 14px 7px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  white-space: nowrap;
+  backdrop-filter: blur(12px);
+  box-shadow: -3px 0 12px rgba(0,0,0,0.3);
+  user-select: none;
+}
+.bm-tab:hover {
+  background: rgba(0,200,255,0.15);
+  color: var(--live);
+  border-color: var(--live);
+  padding-right: 11px;
+}
+.bm-tab.active {
+  background: rgba(0,200,255,0.2);
+  color: var(--live);
+  border-color: var(--live);
+  font-weight: 700;
+  box-shadow: -3px 0 16px rgba(0,200,255,0.25);
+}
+
+
+/* ── RIGHT CONTROL PANEL ── */
+#rpanel {
+  position:fixed;top:52px;right:50px;bottom:38px;z-index:890;
+  width:230px;
+  display:flex;flex-direction:column;gap:6px;
+  pointer-events:none; /* children re-enable */
+  overflow-y:auto;overflow-x:hidden;padding:8px 4px;
+}
+#rpanel::-webkit-scrollbar{width:3px}
+#rpanel::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
+
+.rcard {
+  pointer-events:all;
+  background:linear-gradient(135deg,#0a1828f4,#0d1f33f4);
+  backdrop-filter:blur(18px);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  transition:box-shadow .2s;
+}
+.rcard:hover { box-shadow:0 4px 24px rgba(0,200,255,.12); }
+
+.rcard-hd {
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 12px;cursor:pointer;user-select:none;
+  border-bottom:1px solid transparent;
+  transition:border-color .2s;
+}
+.rcard-hd:hover { border-bottom-color:rgba(0,200,255,.15); }
+.rcard-title {
+  font-family:var(--mono);font-size:9px;letter-spacing:2px;
+  color:rgba(0,200,255,.65);
+}
+.rcard-arrow {
+  font-size:10px;color:rgba(0,200,255,.45);
+  transition:transform .25s var(--ease);
+}
+.rcard.collapsed .rcard-arrow { transform:rotate(-90deg); }
+.rcard-body {
+  padding:8px 10px 10px;
+  border-top:1px solid rgba(0,200,255,.07);
+}
+.rcard.collapsed .rcard-body { display:none; }
 
 /* Custom Map Labels */
 .ss-label{
@@ -472,88 +564,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
     <div id="feederChecks" style="display:flex;flex-direction:column;gap:2px;margin-top:4px"></div>
   </div>
 
-  <div class="psec">
-    <div class="psec-t">// LAYER TYPES</div>
-    <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
-      <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
-      <div class="lname">UG Lines</div>
-      <div class="lcnt" id="cnt-ug-lines">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
-      <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
-      <div class="lname">OH Lines</div>
-      <div class="lcnt" id="cnt-oh-lines">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
-      <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
-      <div class="lname">Cable Points</div>
-      <div class="lcnt" id="cnt-points">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')">
-      <div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div>
-      <div class="lname">DP Structures</div>
-      <div class="lcnt" id="cnt-dp">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')">
-      <div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div>
-      <div class="lname">AB Switches</div>
-      <div class="lcnt" id="cnt-ab">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')">
-      <div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div>
-      <div class="lname">Cut Points</div>
-      <div class="lcnt" id="cnt-cut">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
-      <div class="lswatch dot" style="background:#00c8ff;border-color:#fff;border-radius:2px"></div>
-      <div class="lname">33/11KV SS</div>
-      <div class="lcnt" id="cnt-ss33">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
-      <div class="lswatch dot" style="background:#ff1744;border-color:#fff"></div>
-      <div class="lname">EHT SS</div>
-      <div class="lcnt" id="cnt-ehts">—</div>
-      <div class="tog"></div>
-    </div>
-    <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
-      <div class="lswatch" style="background:#e8718d;height:2px"></div>
-      <div class="lname">Feeder Segments</div>
-      <div class="lcnt" id="cnt-fsegs">—</div>
-      <div class="tog"></div>
-    </div>
-  </div>
 
-  <div class="psec">
-    <div class="psec-t">// CABLE TYPE</div>
-    <div class="pills">
-      <div class="pill active" id="fp-all" style="color:#00c8ff;border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.1)" onclick="setCableFilter('all')">ALL</div>
-      <div class="pill" id="fp-ug" style="color:#2196f3;border-color:rgba(33,150,243,.3)" onclick="setCableFilter('ug')">UG ONLY</div>
-      <div class="pill" id="fp-oh" style="color:#f44336;border-color:rgba(244,67,54,.3)" onclick="setCableFilter('oh')">OH ONLY</div>
-    </div>
-  </div>
-
-  <div class="psec">
-    <div class="psec-t">// BASEMAP</div>
-    <div class="bmgrid">
-      <div class="bmbtn" id="bm-dark" onclick="setBM('dark')">🌑 Dark</div>
-      <div class="bmbtn" id="bm-satellite" onclick="setBM('satellite')">🛰️ Satellite</div>
-      <div class="bmbtn" id="bm-street" onclick="setBM('street')">🗺️ OSM Street</div>
-      <div class="bmbtn" bmbtn active" id="bm-hybrid" onclick="setBM('hybrid')">🛰️ Hybrid</div>
-    </div>
-  </div>
-
-  <div class="psec" style="margin-top:auto">
-    <div class="psec-t">// SECTION STATS</div>
-    <div class="strow"><span class="stlbl">Total Features</span><span class="stval" id="st-total">—</span></div>
-    <div class="strow"><span class="stlbl">Visible Features</span><span class="stval" id="st-visible">—</span></div>
-  </div>
 </div><div id="map"></div>
 
 <div id="botbar">
@@ -595,6 +606,13 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
+
+// ── RIGHT PANEL CARD COLLAPSE ──
+function toggleRcard(id) {
+  const card = document.getElementById(id);
+  if(card) card.classList.toggle('collapsed');
+}
+
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
     document.documentElement.requestFullscreen().catch(err => {
@@ -609,15 +627,18 @@ const BM = {
   dark:      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}),
   satellite: L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:22}),
   street:    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:22}),
-  hybrid:    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:22}) 
+  hybrid:    L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:22}),
+  google:    L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxZoom:22}) 
 };
-let curBM='hybrid'; BM.hybrid.addTo(map);
+let curBM='dark'; BM.dark.addTo(map);
 
 function setBM(name){
+  if(!BM[name]) return;
   map.removeLayer(BM[curBM]); BM[name].addTo(map); BM[name].bringToBack();
   curBM=name;
-  document.querySelectorAll('.bmbtn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('bm-'+name).classList.add('active');
+  document.querySelectorAll('.bmbtn,.bm-tab').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById('bm-'+name);
+  if(el) el.classList.add('active');
   toast(name.charAt(0).toUpperCase()+name.slice(1)+' basemap');
 }
 
@@ -1236,5 +1257,112 @@ setTimeout(()=>{
 setTimeout(()=>dismissLoader(), 5000);
 document.getElementById('loader').addEventListener('click', dismissLoader);
 </script>
+
+<!-- ── RIGHT SIDE BASEMAP TABS ── -->
+<div id="bm-tabs">
+  <div class="bm-tab active" id="bm-dark"     onclick="setBM('dark')">🌑 DARK</div>
+  <div class="bm-tab"        id="bm-satellite" onclick="setBM('satellite')">🛰 SATELLITE</div>
+  <div class="bm-tab"        id="bm-hybrid"   onclick="setBM('hybrid')">🌍 HYBRID</div>
+  <div class="bm-tab"        id="bm-street"   onclick="setBM('street')">🗺 STREET</div>
+  <div class="bm-tab"        id="bm-google"   onclick="setBM('google')">📍 GOOGLE</div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     RIGHT CONTROL PANEL
+══════════════════════════════════════════════ -->
+<div id="rpanel">
+
+  <!-- LAYER TYPES -->
+  <div class="rcard" id="rc-layers">
+    <div class="rcard-hd" onclick="toggleRcard('rc-layers')">
+      <span class="rcard-title">// LAYER TYPES</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
+        <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
+        <div class="lname">UG Lines</div>
+        <div class="lcnt" id="cnt-ug-lines">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
+        <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
+        <div class="lname">OH Lines</div>
+        <div class="lcnt" id="cnt-oh-lines">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
+        <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
+        <div class="lname">Cable Points</div>
+        <div class="lcnt" id="cnt-points">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')">
+        <div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div>
+        <div class="lname">DP Structures</div>
+        <div class="lcnt" id="cnt-dp">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')">
+        <div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div>
+        <div class="lname">AB Switches</div>
+        <div class="lcnt" id="cnt-ab">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')">
+        <div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div>
+        <div class="lname">Cut Points</div>
+        <div class="lcnt" id="cnt-cut">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
+        <div class="lswatch dot" style="background:#2196f3;border-color:#fff;border-radius:50%"></div>
+        <div class="lname">33/11KV SS</div>
+        <div class="lcnt" id="cnt-ss33">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
+        <div class="lswatch dot" style="background:#800080;border-color:#fff"></div>
+        <div class="lname">EHT SS</div>
+        <div class="lcnt" id="cnt-ehts">—</div>
+        <div class="tog"></div>
+      </div>
+      <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
+        <div class="lswatch" style="background:#e8718d;height:2px"></div>
+        <div class="lname">Feeder Segments</div>
+        <div class="lcnt" id="cnt-fsegs">—</div>
+        <div class="tog"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CABLE TYPE -->
+  <div class="rcard" id="rc-cable">
+    <div class="rcard-hd" onclick="toggleRcard('rc-cable')">
+      <span class="rcard-title">// CABLE TYPE</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="pills">
+        <div class="pill active" id="fp-all" style="color:#00c8ff;border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.1)" onclick="setCableFilter('all')">ALL</div>
+        <div class="pill" id="fp-ug" style="color:#2196f3;border-color:rgba(33,150,243,.3)" onclick="setCableFilter('ug')">UG ONLY</div>
+        <div class="pill" id="fp-oh" style="color:#f44336;border-color:rgba(244,67,54,.3)" onclick="setCableFilter('oh')">OH ONLY</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION STATS -->
+  <div class="rcard" id="rc-stats">
+    <div class="rcard-hd" onclick="toggleRcard('rc-stats')">
+      <span class="rcard-title">// SECTION STATS</span>
+      <span class="rcard-arrow">▾</span>
+    </div>
+    <div class="rcard-body">
+      <div class="strow"><span class="stlbl">Total Features</span><span class="stval" id="st-total">—</span></div>
+      <div class="strow"><span class="stlbl">Visible Features</span><span class="stval" id="st-visible">—</span></div>
+    </div>
+  </div>
+
+</div>
 </body>
 </html>
