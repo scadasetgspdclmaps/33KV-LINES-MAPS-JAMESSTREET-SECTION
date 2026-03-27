@@ -641,8 +641,8 @@ function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
   
-  // Hide messy internal keys
-  const hideKeys = ['id', 'layer', 'path', 'popup', 'fid'];
+  // Notice that 'popup' is NO LONGER in this array
+  const hideKeys = ['id', 'layer', 'path', 'fid'];
 
   // Add the ID to the top left if available
   let headerId = '';
@@ -653,7 +653,14 @@ function popup(feat, regEntry){
   Object.keys(p).forEach(k => {
     if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
         let val = p[k];
-        if(!isNaN(val) && val.toString().indexOf('.') !== -1) {
+
+        // Custom handling to safely format your Substation "Popup" text
+        if (k.toLowerCase() === 'popup') {
+            rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Details:</strong><br>${val}</td></tr>`;
+            return; // skip the regular table row builder
+        }
+
+        if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) {
             val = parseFloat(val).toFixed(3);
         }
         if(k.toLowerCase().includes('length') || k.toLowerCase().includes('transitions')) val += ' km';
@@ -693,7 +700,6 @@ DATA_REGISTRY.forEach(reg => {
     try {
     const props = feat.properties || {};
     
-    // FIX 1: Look at all possible QGIS keys to properly extract OH/UG type
     let cableType = String(props['Type of Feeder'] || props['Feeder_Type'] || props['Feeder Type'] || reg.cable || '').trim().toUpperCase();
     const isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
     cableType = isOH ? 'OH' : 'UG';
@@ -753,7 +759,7 @@ DATA_REGISTRY.forEach(reg => {
       if(layer){
         layer.bindPopup(popupContent);
 
-        // FIX 3: ADD VISIBLE POLE NUMBERS (White Text, Black Shadow)
+        // ADD VISIBLE POLE NUMBERS
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
             layer.bindTooltip(String(poleNo).trim(), {
@@ -941,13 +947,12 @@ function dismissLoader(){
               const p = feat.properties || {};
               const popupContent = popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'});
               
-              // Determine Segment Color
               let pairType = String(p['Pair_Type'] || p['Type of Feeder'] || p['Feeder_Type'] || p['Feeder Type'] || '').trim().toUpperCase();
               let isOH = (pairType === 'OH' || pairType === 'OVERHEAD');
               let isTRANS = (pairType === 'TRANS');
               
-              let color = isOH ? '#f44336' : '#2196f3'; // Red for OH, Blue for UG
-              if (isTRANS) color = '#9c27b0'; // Purple for transition
+              let color = isOH ? '#f44336' : '#2196f3'; 
+              if (isTRANS) color = '#9c27b0'; 
               
               let segCable = isOH ? 'OH' : 'UG';
               if (isTRANS) segCable = '-';
@@ -955,7 +960,6 @@ function dismissLoader(){
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
-                // Draw detailed segments on top of the base lines so they catch the mouse click
                 const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9});
                 
                 layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
