@@ -223,7 +223,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .leaflet-popup-tip-container { display: none; }
 .leaflet-popup-content {
-  margin: 16px !important;
+  margin: 14px 16px !important;
   min-width: 250px;
 }
 .leaflet-popup-close-button {
@@ -235,33 +235,46 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .leaflet-popup-close-button:hover { color: #000 !important; }
 
 /* The HTML Table formatting */
+.pc-header-id {
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 10px;
+}
 .popup-table {
   width: 100%;
   border-collapse: collapse;
 }
 .popup-table th, .popup-table td {
-  padding: 3px 0;
+  padding: 2px 0;
   vertical-align: top;
   font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #333;
+  font-size: 11px;
+  color: #222;
   line-height: 1.4;
 }
 .popup-table th {
-  font-weight: 600;
-  width: 55%;
-  padding-right: 12px;
+  font-weight: 700;
+  width: 50%;
+  padding-right: 10px;
   text-align: left;
 }
 .popup-table td {
   text-align: left;
   word-break: break-word;
 }
-.pc-header-id {
-  font-family: Arial, sans-serif;
-  font-size: 12px;
-  color: #333;
-  margin-bottom: 8px;
+
+/* Point Labels (Numbers on map) */
+.pole-label {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  color: #000 !important;
+  font-size: 11px !important;
+  font-family: 'Arial', sans-serif !important;
+  font-weight: bold !important;
+  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff !important;
+  padding: 0 !important;
 }
 
 /* Bottom bar & Legend */
@@ -325,20 +338,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   box-shadow:0 2px 8px rgba(0,0,0,.3)!important;
 }
 .ss-label.leaflet-tooltip-top::before{border-top-color:#333!important}
-
-/* Point Labels (Numbers on map) */
-.pole-label {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-  color: #000 !important;
-  font-size: 11px !important;
-  font-family: 'Arial', sans-serif !important;
-  font-weight: bold !important;
-  /* Text shadow to make numbers readable on any basemap */
-  text-shadow: -1.5px -1.5px 0 #fff, 1.5px -1.5px 0 #fff, -1.5px 1.5px 0 #fff, 1.5px 1.5px 0 #fff !important;
-  padding: 0 !important;
-}
 </style>
 </head>
 <body>
@@ -646,8 +645,8 @@ function popup(feat, regEntry){
 
   // Add the ID to the top left if available
   let headerId = '';
-  if (p['id'] || p['fid'] || p['ID']) {
-    headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID']}</div>`;
+  if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) {
+    headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID'] || p['Pole Number']}</div>`;
   }
 
   Object.keys(p).forEach(k => {
@@ -692,9 +691,14 @@ DATA_REGISTRY.forEach(reg => {
   data.features.forEach(feat => {
     try {
     const props = feat.properties || {};
-    const cableType = props['Type of Feeder'] || props['Feeder_Type'] || reg.cable;
-    const feederName = props['Feeder Name'] || reg.feeder;
     
+    // Fix 1: Properly extract OH/UG cable type from multiple possible QGIS keys
+    let cableType = String(props['Type of Feeder'] || props['Feeder_Type'] || props['Feeder Type'] || reg.cable || '').trim().toUpperCase();
+    const isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
+    // Ensure we store it cleanly for the visibility filters
+    cableType = isOH ? 'OH' : 'UG';
+
+    const feederName = props['Feeder Name'] || reg.feeder;
     if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
         feederNames.add(feederName);
     }
@@ -709,21 +713,13 @@ DATA_REGISTRY.forEach(reg => {
           ? feat.geometry.coordinates.map(c=>[c[1],c[0]])
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
-        // Explicitly set OH to Red and UG to Blue
-        let color = (cableType === 'OH' || cableType === 'Overhead') ? '#f44336' : '#2196f3'; 
-        let dashArray = null;
+        // Fix 2: Explicitly set Red for OH and Blue for UG exactly as they appear in the screenshots
+        let color = isOH ? '#f44336' : '#2196f3'; 
         let weight = 4;
         let opacity = 0.8;
 
-        if (reg.type.startsWith('fseg')) {
-            color = '#000'; // Black dashed overlay for segments
-            dashArray = '4, 6';
-            weight = 6;     // Thicker line so the segment data is easy to click
-            opacity = 0.6;  
-        }
-
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
-          {color, weight, opacity, dashArray, smoothFactor:1.5});
+          {color, weight, opacity, smoothFactor:1.5});
           
         layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{e.target.setStyle({weight,opacity})});
@@ -757,12 +753,11 @@ DATA_REGISTRY.forEach(reg => {
 
       if(layer){
         layer.bindPopup(popupContent);
-        
-        // ADD VISIBLE POLE NUMBERS
-        let poleNo = props['Pole Number'] || props['Pole_No'] || props['id'] || '';
-        // Only show labels for actual point features (not substations) and only if it's a short string/number
-        if(poleNo && String(poleNo).length < 8 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
-            layer.bindTooltip(String(poleNo), {
+
+        // Fix 3: ADD VISIBLE POLE NUMBERS
+        let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
+        if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
+            layer.bindTooltip(String(poleNo).trim(), {
                 permanent: true,
                 direction: 'right',
                 className: 'pole-label',
@@ -945,15 +940,21 @@ function dismissLoader(){
               if(!feat.geometry) return;
               const p = feat.properties || {};
               const popupContent = popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'});
+              
+              let cableType = String(p['Type of Feeder'] || p['Feeder_Type'] || p['Feeder Type'] || 'UG').trim().toUpperCase();
+              let isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
+              
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
-                // Thick, transparent black dashed line overlay to make segment clicking easy
-                const layer=L.polyline(coords,{color:'#000000',weight:6,opacity:.6, dashArray: '4, 6'}); 
+                // Color matches OH/UG exactly
+                let color = isOH ? '#f44336' : '#2196f3';
+                const layer=L.polyline(coords,{color: color, weight:4, opacity:.8});
+                
                 layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
-                layer.on('mouseout',e=>{e.target.setStyle({weight:6,opacity:.6});});
+                layer.on('mouseout',e=>{e.target.setStyle({weight:4,opacity:.8});});
                 layer.bindPopup(popupContent);
-                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable:'-'}, feederName: p['Feeder_Name'] || 'Feeder Segments', cable: '-'});
+                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: isOH ? 'OH' : 'UG'}, feederName: p['Feeder_Name'] || 'Feeder Segments', cable: isOH ? 'OH' : 'UG'});
               }
             } catch(e){}
           });
