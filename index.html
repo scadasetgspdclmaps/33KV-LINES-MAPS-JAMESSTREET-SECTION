@@ -212,7 +212,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 #ptab.off{left:0 !important;}
 
 /* ══════════════════════════════════════════════════
-   CLEAN WHITE POPUP (Matches QGIS Screenshot Exactly)
+   CLEAN WHITE POPUP
    ══════════════════════════════════════════════════ */
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
@@ -264,16 +264,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   word-break: break-word;
 }
 
-/* Point Labels (Numbers on map) */
+/* Point Labels (Numbers on map) - White text with black shadow */
 .pole-label {
   background: transparent !important;
   border: none !important;
   box-shadow: none !important;
-  color: #000 !important;
+  color: #ffffff !important;
   font-size: 11px !important;
   font-family: 'Arial', sans-serif !important;
   font-weight: bold !important;
-  text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff !important;
+  text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
   padding: 0 !important;
 }
 
@@ -466,7 +466,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 <div id="legend">
   <div class="leg"><div class="leg-l" style="background:#2196f3;box-shadow:0 0 4px #2196f3"></div>UG</div>
   <div class="leg"><div class="leg-l" style="background:#f44336;box-shadow:0 0 4px #f44336"></div>OH</div>
-  <div class="leg"><div class="leg-d" style="background:white;border:2px solid blue"></div>POINT</div>
+  <div class="leg"><div class="leg-l" style="background:#9c27b0;box-shadow:0 0 4px #9c27b0"></div>TRANS</div>
+  <div class="leg"><div class="leg-d" style="background:white;border:2px solid #2196f3"></div>POINT</div>
   <div class="leg"><div class="leg-d" style="background:yellow;border:2px solid black"></div>DP</div>
   <div class="leg"><div class="leg-d" style="background:yellow;border:2px solid black"></div>AB SW</div>
   <div class="leg"><div class="leg-d" style="background:white;border:2px solid black"></div>CUT</div>
@@ -692,10 +693,9 @@ DATA_REGISTRY.forEach(reg => {
     try {
     const props = feat.properties || {};
     
-    // Fix 1: Properly extract OH/UG cable type from multiple possible QGIS keys
+    // FIX 1: Look at all possible QGIS keys to properly extract OH/UG type
     let cableType = String(props['Type of Feeder'] || props['Feeder_Type'] || props['Feeder Type'] || reg.cable || '').trim().toUpperCase();
     const isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
-    // Ensure we store it cleanly for the visibility filters
     cableType = isOH ? 'OH' : 'UG';
 
     const feederName = props['Feeder Name'] || reg.feeder;
@@ -706,22 +706,21 @@ DATA_REGISTRY.forEach(reg => {
     const popupContent = popup(feat, reg);
     let layer;
 
-    // ── MAIN LINES AND SEGMENTS ──
+    // ── MAIN BASE LINES ──
     if(reg.type==='lines' || reg.type.startsWith('fseg')){
       if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
         const coords = feat.geometry.type==='LineString'
           ? feat.geometry.coordinates.map(c=>[c[1],c[0]])
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
-        // Fix 2: Explicitly set Red for OH and Blue for UG exactly as they appear in the screenshots
-        let color = isOH ? '#f44336' : '#2196f3'; 
+        let color = isOH ? '#f44336' : '#2196f3'; // OH gets Red, UG gets Blue
         let weight = 4;
-        let opacity = 0.8;
+        let opacity = 0.9;
 
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
           {color, weight, opacity, smoothFactor:1.5});
           
-        layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});layer.bringToFront()});
+        layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{e.target.setStyle({weight,opacity})});
         layer.bindPopup(popupContent);
       }
@@ -754,7 +753,7 @@ DATA_REGISTRY.forEach(reg => {
       if(layer){
         layer.bindPopup(popupContent);
 
-        // Fix 3: ADD VISIBLE POLE NUMBERS
+        // FIX 3: ADD VISIBLE POLE NUMBERS (White Text, Black Shadow)
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10 && !reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
             layer.bindTooltip(String(poleNo).trim(), {
@@ -929,6 +928,7 @@ function dismissLoader(){
   if(ov){ ov.classList.add('gone'); setTimeout(()=>ov.remove(),500); }
   map.invalidateSize();
   
+  // DEFERRED SEGMENT LOADING
   setTimeout(()=>{
     const s=document.createElement('script');
     s.src='data/Feeder_Segments_81.js';
@@ -941,26 +941,34 @@ function dismissLoader(){
               const p = feat.properties || {};
               const popupContent = popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'});
               
-              let cableType = String(p['Type of Feeder'] || p['Feeder_Type'] || p['Feeder Type'] || 'UG').trim().toUpperCase();
-              let isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
+              // Determine Segment Color
+              let pairType = String(p['Pair_Type'] || p['Type of Feeder'] || p['Feeder_Type'] || p['Feeder Type'] || '').trim().toUpperCase();
+              let isOH = (pairType === 'OH' || pairType === 'OVERHEAD');
+              let isTRANS = (pairType === 'TRANS');
+              
+              let color = isOH ? '#f44336' : '#2196f3'; // Red for OH, Blue for UG
+              if (isTRANS) color = '#9c27b0'; // Purple for transition
+              
+              let segCable = isOH ? 'OH' : 'UG';
+              if (isTRANS) segCable = '-';
               
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
-                // Color matches OH/UG exactly
-                let color = isOH ? '#f44336' : '#2196f3';
-                const layer=L.polyline(coords,{color: color, weight:4, opacity:.8});
+                // Draw detailed segments on top of the base lines so they catch the mouse click
+                const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9});
                 
                 layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
-                layer.on('mouseout',e=>{e.target.setStyle({weight:4,opacity:.8});});
+                layer.on('mouseout',e=>{e.target.setStyle({weight:6,opacity:0.9});});
                 layer.bindPopup(popupContent);
-                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: isOH ? 'OH' : 'UG'}, feederName: p['Feeder_Name'] || 'Feeder Segments', cable: isOH ? 'OH' : 'UG'});
+                
+                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments', cable: segCable});
               }
             } catch(e){}
           });
           updateCounts();
           updateVisibility();
-          toast('Deferred Feeder Segments Loaded',1500);
+          toast('Detailed Feeder Segments Loaded',1500);
         }
       }catch(e){ console.warn('fsegs load error',e); }
     };
