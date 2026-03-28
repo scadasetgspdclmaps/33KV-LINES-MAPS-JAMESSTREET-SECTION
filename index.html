@@ -141,7 +141,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0;transition:all .3s}
 .chip-live{color:var(--ok);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)}
 .chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:breakdown-blink .6s infinite}
-.chip-trip{color:var(--trip);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.1);animation:breakdown-blink .4s infinite}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -190,28 +189,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .ftog-row .tog { background:rgba(0,200,255,.28);border-color:var(--live) }
 .ftog-row .tog::after { transform:translateX(13px);background:var(--live) }
 
-/* FOCUS HIGHLIGHT HOVER EFFECT */
 .focus-txt { transition: 0.2s; }
 .focus-txt:hover { color: #fff !important; font-weight: bold; padding-left: 3px; }
 
-/* Basemap */
 .bmgrid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:2px}
 .bmbtn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:8px;padding:7px 5px;cursor:pointer;text-align:center;font-family:var(--sans);font-size:11px;color:var(--text);transition:all .2s}
 .bmbtn:hover{background:rgba(0,200,255,.08);border-color:var(--live);transform:scale(1.02)}
 .bmbtn.active{background:rgba(0,200,255,.15);border-color:var(--live);color:var(--live);font-weight:600}
 
-/* Pills */
 .pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
 .pill{font-family:var(--mono);font-size:9px;letter-spacing:1px;padding:4px 9px;border-radius:13px;cursor:pointer;border:1px solid;transition:all .2s;user-select:none}
 .pill:hover{transform:scale(1.06)}
 .pill.active{font-weight:700}
 
-/* Stats */
 .strow{display:flex;justify-content:space-between;align-items:center;padding:4px 0}
 .stlbl{font-family:var(--sans);font-size:11px;color:rgba(176,204,224,.45)}
 .stval{font-family:var(--mono);font-size:11px;color:var(--live)}
 
-/* Panel tab */
 #ptab{
   position:fixed;top:62px;left:258px;z-index:910;width:20px;height:44px;
   background:var(--panel);border:1px solid var(--border);border-left:none;
@@ -236,7 +230,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* CLEAN WHITE POPUP */
+/* POPUP FORMATTING */
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #333333 !important;
@@ -245,49 +239,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   padding: 0 !important;
 }
 .leaflet-popup-tip-container { display: none; }
-.leaflet-popup-content {
-  margin: 14px 16px !important;
-  min-width: 250px;
-}
-.leaflet-popup-close-button {
-  color: #888 !important;
-  font-size: 18px !important;
-  top: 8px !important;
-  right: 8px !important;
-}
+.leaflet-popup-content { margin: 14px 16px !important; min-width: 250px; }
+.leaflet-popup-close-button { color: #888 !important; font-size: 18px !important; top: 8px !important; right: 8px !important; }
 .leaflet-popup-close-button:hover { color: #000 !important; }
+.pc-header-id { font-family: Arial, sans-serif; font-size: 13px; color: #555; margin-bottom: 10px; }
+.popup-table { width: 100%; border-collapse: collapse; }
+.popup-table th, .popup-table td { padding: 2px 0; vertical-align: top; font-family: Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.4; }
+.popup-table th { font-weight: 700; width: 50%; padding-right: 10px; text-align: left; }
+.popup-table td { text-align: left; word-break: break-word; }
 
-/* The HTML Table formatting */
-.pc-header-id {
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  color: #555;
-  margin-bottom: 10px;
-}
-.popup-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.popup-table th, .popup-table td {
-  padding: 2px 0;
-  vertical-align: top;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  color: #222;
-  line-height: 1.4;
-}
-.popup-table th {
-  font-weight: 700;
-  width: 50%;
-  padding-right: 10px;
-  text-align: left;
-}
-.popup-table td {
-  text-align: left;
-  word-break: break-word;
-}
-
-/* Point Labels (Numbers on map) - White text with black shadow */
 .pole-label {
   background: transparent !important;
   border: none !important;
@@ -301,7 +261,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   pointer-events: none;
 }
 
-/* Bottom bar & Legend */
 #botbar{
   position:fixed;bottom:0;left:0;right:0;z-index:900;height:38px;
   background:rgba(9,22,37,.9);backdrop-filter:blur(12px);
@@ -347,121 +306,56 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-
 /* ── ANIMATED 33/11KV SS SYMBOL ── */
-@keyframes ss33-ring-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes ss33-core-pulse {
-  0%,100% { transform: scale(1);   opacity:1; }
-  50%      { transform: scale(1.15); opacity:.85; }
-}
-@keyframes eht-ring-pulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(255,100,0,0.7), 0 0 8px rgba(255,100,0,0.5); }
-  60%      { box-shadow: 0 0 0 8px rgba(255,100,0,0),  0 0 20px rgba(255,100,0,0.8); }
-}
+@keyframes ss33-ring-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes ss33-core-pulse { 0%,100% { transform: scale(1); opacity:1; } 50% { transform: scale(1.15); opacity:.85; } }
+@keyframes eht-ring-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,100,0,0.7), 0 0 8px rgba(255,100,0,0.5); } 60% { box-shadow: 0 0 0 8px rgba(255,100,0,0), 0 0 20px rgba(255,100,0,0.8); } }
 
-.ss33-wrap {
-  position:relative;
-  width:36px;height:36px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-}
-.ss33-ring {
-  position:absolute;inset:0;
-  border-radius:50%;
-  border:2px dashed rgba(0,180,255,0.9);
-  animation: ss33-ring-spin 4s linear infinite;
-  box-shadow: 0 0 8px rgba(0,180,255,0.5), inset 0 0 8px rgba(0,180,255,0.15);
-}
-.ss33-core {
-  width:22px;height:22px;border-radius:50%;
-  background:radial-gradient(circle, #1e88e5 0%, #0d47a1 100%);
-  border:2px solid rgba(255,255,255,0.9);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 10px rgba(33,150,243,0.8);
-  animation: ss33-core-pulse 2s ease-in-out infinite;
-  z-index:1;
-}
-.ss33-bolt {
-  font-size:11px;line-height:1;color:#fff;
-  text-shadow:0 0 4px #fff;
-  margin-top:-1px;
-}
+.ss33-wrap { position:relative; width:36px;height:36px; display:flex;align-items:center;justify-content:center; cursor:pointer; }
+.ss33-ring { position:absolute;inset:0; border-radius:50%; border:2px dashed rgba(0,180,255,0.9); animation: ss33-ring-spin 4s linear infinite; box-shadow: 0 0 8px rgba(0,180,255,0.5), inset 0 0 8px rgba(0,180,255,0.15); }
+.ss33-core { width:22px;height:22px;border-radius:50%; background:radial-gradient(circle, #1e88e5 0%, #0d47a1 100%); border:2px solid rgba(255,255,255,0.9); display:flex;align-items:center;justify-content:center; box-shadow:0 0 10px rgba(33,150,243,0.8); animation: ss33-core-pulse 2s ease-in-out infinite; z-index:1; }
+.ss33-bolt { font-size:11px;line-height:1;color:#fff; text-shadow:0 0 4px #fff; margin-top:-1px; }
 
-.eht-wrap {
-  position:relative;
-  width:40px;height:28px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-}
-.eht-rect {
-  position:absolute;inset:0;
-  border:2px solid rgba(255,120,0,0.95);
-  border-radius:4px;
-  animation: eht-ring-pulse 1.8s ease-in-out infinite;
-  background:rgba(30,10,0,0.75);
-}
-.eht-core {
-  z-index:1;
-  display:flex;align-items:center;justify-content:center;
-  gap:3px;
-}
-.eht-power {
-  font-size:16px;line-height:1;
-  filter: drop-shadow(0 0 4px #ff6600);
-}
-.eht-kv {
-  font-family:var(--mono);font-size:7px;color:rgba(255,160,60,0.9);
-  line-height:1;letter-spacing:.5px;
-}
+.eht-wrap { position:relative; width:40px;height:28px; display:flex;align-items:center;justify-content:center; cursor:pointer; }
+.eht-rect { position:absolute;inset:0; border:2px solid rgba(255,120,0,0.95); border-radius:4px; animation: eht-ring-pulse 1.8s ease-in-out infinite; background:rgba(30,10,0,0.75); }
+.eht-core { z-index:1; display:flex;align-items:center;justify-content:center; gap:3px; }
+.eht-power { font-size:16px;line-height:1; filter: drop-shadow(0 0 4px #ff6600); }
+.eht-kv { font-family:var(--mono);font-size:7px;color:rgba(255,160,60,0.9); line-height:1;letter-spacing:.5px; }
 
-/* ── FEEDER STATUS ANIMATIONS ── */
+/* ── UPDATED ENERGY FLOW & BREAKDOWN ANIMATIONS ── */
 @keyframes energy-flow {
-  from { stroke-dashoffset: 20; }
-  to   { stroke-dashoffset: 0; }
+  to { stroke-dashoffset: -40; } /* Negative offset forces dots to move forward */
 }
-
 @keyframes breakdown-blink {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px #ff1744); }
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 8px #ff1744); }
   50%      { opacity: 0; filter: none; }
 }
 
-/* Apply to normal/live lines for moving energy effect */
+/* This creates distinct 'packets' of energy flowing along the SVG path */
 .feeder-flow {
-  stroke-dasharray: 4, 16 !important;
+  stroke-dasharray: 6 34 !important; /* 6px dash (energy dot), 34px gap */
   stroke-linecap: round !important;
-  animation: energy-flow 0.8s linear infinite !important;
+  animation: energy-flow 1.5s linear infinite !important;
 }
 
-/* Apply to breakdown lines for full line blinking */
+/* This makes the entire line blink on and off */
 .feeder-breakdown { 
   stroke-dasharray: none !important;
   animation: breakdown-blink 0.6s ease-in-out infinite !important; 
 }
 
 
-.fs-status-bar {
-  display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee;
-}
-.fs-status-btn {
-  flex:1;padding:5px 3px;border-radius:5px;border:1px solid #ccc;
-  font-size:10px;font-weight:700;cursor:pointer;text-align:center;
-  font-family:Arial,sans-serif;transition:all 0.2s;
-}
-.fs-status-btn.active-live       { background:#00c853;color:#fff;border-color:#00c853; }
-.fs-status-btn.active-breakdown  { background:#ff1744;color:#fff;border-color:#ff1744; }
-.fs-status-btn.active-idle       { background:#9e9e9e;color:#fff;border-color:#9e9e9e; }
+.fs-status-bar { display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee; }
+.fs-status-btn { flex:1;padding:5px 3px;border-radius:5px;border:1px solid #ccc; font-size:10px;font-weight:700;cursor:pointer;text-align:center; font-family:Arial,sans-serif;transition:all 0.2s; }
+.fs-status-btn.active-live { background:#00c853;color:#fff;border-color:#00c853; }
+.fs-status-btn.active-breakdown { background:#ff1744;color:#fff;border-color:#ff1744; }
+.fs-status-btn.active-idle { background:#9e9e9e;color:#fff;border-color:#9e9e9e; }
 .fs-status-btn:not([class*=active]):hover { background:#f0f0f0; }
 
-.f-badge {
-  font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px;
-  font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;
-}
-.f-badge-live      { background:rgba(0,200,83,.2);color:#00c853;border:1px solid #00c853; }
+.f-badge { font-size:8px;font-weight:700;padding:1px 5px;border-radius:8px; font-family:var(--mono);letter-spacing:.5px;flex-shrink:0; }
+.f-badge-live { background:rgba(0,200,83,.2);color:#00c853;border:1px solid #00c853; }
 .f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:breakdown-blink 0.6s infinite; }
-.f-badge-idle      { background:rgba(158,158,158,.2);color:#9e9e9e;border:1px solid #9e9e9e; }
+.f-badge-idle { background:rgba(158,158,158,.2);color:#9e9e9e;border:1px solid #9e9e9e; }
 
 .status-legend {
   position:fixed;bottom:46px;right:58px;z-index:800;
@@ -473,125 +367,32 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .sl-row{display:flex;align-items:center;gap:6px;color:var(--text)}
 .sl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* RIGHT SIDE BASEMAP TABS */
-#bm-tabs {
-  position:fixed;
-  top:50%;
-  right:0;
-  transform:translateY(-50%);
-  z-index:950;
-  display:flex;
-  flex-direction:column;
-  gap:2px;
-}
-.bm-tab {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  background: linear-gradient(180deg,#0a1828f0,#0d1f33f0);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-  padding: 14px 7px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.2s var(--ease);
-  white-space: nowrap;
-  backdrop-filter: blur(12px);
-  box-shadow: -3px 0 12px rgba(0,0,0,0.3);
-  user-select: none;
-}
-.bm-tab:hover {
-  background: rgba(0,200,255,0.15);
-  color: var(--live);
-  border-color: var(--live);
-  padding-right: 11px;
-}
-.bm-tab.active {
-  background: rgba(0,200,255,0.2);
-  color: var(--live);
-  border-color: var(--live);
-  font-weight: 700;
-  box-shadow: -3px 0 16px rgba(0,200,255,0.25);
-}
+#bm-tabs { position:fixed; top:50%; right:0; transform:translateY(-50%); z-index:950; display:flex; flex-direction:column; gap:2px; }
+.bm-tab { writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg); background: linear-gradient(180deg,#0a1828f0,#0d1f33f0); border: 1px solid var(--border); border-right: none; border-radius: 8px 0 0 8px; padding: 14px 7px; font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px; color: var(--text); cursor: pointer; transition: all 0.2s var(--ease); white-space: nowrap; backdrop-filter: blur(12px); box-shadow: -3px 0 12px rgba(0,0,0,0.3); user-select: none; }
+.bm-tab:hover { background: rgba(0,200,255,0.15); color: var(--live); border-color: var(--live); padding-right: 11px; }
+.bm-tab.active { background: rgba(0,200,255,0.2); color: var(--live); border-color: var(--live); font-weight: 700; box-shadow: -3px 0 16px rgba(0,200,255,0.25); }
 
-/* RIGHT CONTROL PANEL */
-#rpanel {
-  position:fixed;top:52px;right:50px;bottom:38px;z-index:890;
-  width:230px;
-  display:flex;flex-direction:column;gap:6px;
-  pointer-events:none; 
-  overflow-y:auto;overflow-x:hidden;padding:8px 4px;
-}
+#rpanel { position:fixed;top:52px;right:50px;bottom:38px;z-index:890; width:230px; display:flex;flex-direction:column;gap:6px; pointer-events:none; overflow-y:auto;overflow-x:hidden;padding:8px 4px; }
 #rpanel::-webkit-scrollbar{width:3px}
 #rpanel::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
 
-.rcard {
-  pointer-events:all;
-  background:linear-gradient(135deg,#0a1828f4,#0d1f33f4);
-  backdrop-filter:blur(18px);
-  border:1px solid var(--border);
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,.35);
-  transition:box-shadow .2s;
-}
+.rcard { pointer-events:all; background:linear-gradient(135deg,#0a1828f4,#0d1f33f4); backdrop-filter:blur(18px); border:1px solid var(--border); border-radius:10px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35); transition:box-shadow .2s; }
 .rcard:hover { box-shadow:0 4px 24px rgba(0,200,255,.12); }
-
-.rcard-hd {
-  display:flex;align-items:center;justify-content:space-between;
-  padding:8px 12px;cursor:pointer;user-select:none;
-  border-bottom:1px solid transparent;
-  transition:border-color .2s;
-}
+.rcard-hd { display:flex;align-items:center;justify-content:space-between; padding:8px 12px;cursor:pointer;user-select:none; border-bottom:1px solid transparent; transition:border-color .2s; }
 .rcard-hd:hover { border-bottom-color:rgba(0,200,255,.15); }
-.rcard-title {
-  font-family:var(--mono);font-size:9px;letter-spacing:2px;
-  color:rgba(0,200,255,.65);
-}
-.rcard-arrow {
-  font-size:10px;color:rgba(0,200,255,.45);
-  transition:transform .25s var(--ease);
-}
+.rcard-title { font-family:var(--mono);font-size:9px;letter-spacing:2px; color:rgba(0,200,255,.65); }
+.rcard-arrow { font-size:10px;color:rgba(0,200,255,.45); transition:transform .25s var(--ease); }
 .rcard.collapsed .rcard-arrow { transform:rotate(-90deg); }
-.rcard-body {
-  padding:8px 10px 10px;
-  border-top:1px solid rgba(0,200,255,.07);
-}
+.rcard-body { padding:8px 10px 10px; border-top:1px solid rgba(0,200,255,.07); }
 .rcard.collapsed .rcard-body { display:none; }
 
-.fi-btn {
-  flex:1;padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.15);
-  background:rgba(255,255,255,.05);color:rgba(176,204,224,.6);
-  font-family:var(--mono);font-size:8px;letter-spacing:.5px;
-  cursor:pointer;transition:all .18s;white-space:nowrap;
-}
+.fi-btn { flex:1;padding:2px 4px;border-radius:4px;border:1px solid rgba(255,255,255,.15); background:rgba(255,255,255,.05);color:rgba(176,204,224,.6); font-family:var(--mono);font-size:8px;letter-spacing:.5px; cursor:pointer;transition:all .18s;white-space:nowrap; }
 .fi-btn:hover { filter:brightness(1.4); }
-.fi-live.fi-active      { background:rgba(0,200,83,.25);color:#00c853;border-color:#00c853; }
+.fi-live.fi-active { background:rgba(0,200,83,.25);color:#00c853;border-color:#00c853; }
 .fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:breakdown-blink .6s infinite; }
-.fi-idle.fi-active      { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
+.fi-idle.fi-active { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
 
-/* Custom Map Labels */
-.ss-label{
-  background:rgba(9,22,37,.88)!important;
-  border:1px solid rgba(0,200,255,.35)!important;
-  border-radius:4px!important;
-  color:#00c8ff!important;
-  font-family:'Share Tech Mono',monospace!important;
-  font-weight:normal;
-  font-size:9px!important;
-  letter-spacing:.3px!important;
-  padding:2px 5px!important;
-  white-space:nowrap!important;
-  box-shadow:0 2px 6px rgba(0,0,0,.4)!important;
-  opacity:0.9!important;
-  max-width:120px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-}
+.ss-label{ background:rgba(9,22,37,.88)!important; border:1px solid rgba(0,200,255,.35)!important; border-radius:4px!important; color:#00c8ff!important; font-family:'Share Tech Mono',monospace!important; font-weight:normal; font-size:9px!important; letter-spacing:.3px!important; padding:2px 5px!important; white-space:nowrap!important; box-shadow:0 2px 6px rgba(0,0,0,.4)!important; opacity:0.9!important; max-width:120px!important; overflow:hidden!important; text-overflow:ellipsis!important; }
 .ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
 </style>
 </head>
@@ -673,75 +474,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 </div>
 
 <div id="rpanel">
-
   <div class="rcard" id="rc-layers">
-    <div class="rcard-hd" onclick="toggleRcard('rc-layers')">
-      <span class="rcard-title">// LAYER TYPES</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
+    <div class="rcard-hd" onclick="toggleRcard('rc-layers')"><span class="rcard-title">// LAYER TYPES</span><span class="rcard-arrow">▾</span></div>
     <div class="rcard-body">
-      <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')">
-        <div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div>
-        <div class="lname">UG Lines</div>
-        <div class="lcnt" id="cnt-ug-lines">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')">
-        <div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div>
-        <div class="lname">OH Lines</div>
-        <div class="lcnt" id="cnt-oh-lines">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-points" onclick="toggleLyr('points')">
-        <div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div>
-        <div class="lname">Cable Points</div>
-        <div class="lcnt" id="cnt-points">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')">
-        <div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div>
-        <div class="lname">DP Structures</div>
-        <div class="lcnt" id="cnt-dp">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')">
-        <div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div>
-        <div class="lname">AB Switches</div>
-        <div class="lcnt" id="cnt-ab">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')">
-        <div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div>
-        <div class="lname">Cut Points</div>
-        <div class="lcnt" id="cnt-cut">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')">
-        <div class="lswatch dot" style="background:#2196f3;border-color:#fff;border-radius:50%"></div>
-        <div class="lname">33/11KV SS</div>
-        <div class="lcnt" id="cnt-ss33">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')">
-        <div class="lswatch dot" style="background:#800080;border-color:#fff"></div>
-        <div class="lname">EHT SS</div>
-        <div class="lcnt" id="cnt-ehts">—</div>
-        <div class="tog"></div>
-      </div>
-      <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')">
-        <div class="lswatch" style="background:#e8718d;height:2px"></div>
-        <div class="lname">Feeder Segments</div>
-        <div class="lcnt" id="cnt-fsegs">—</div>
-        <div class="tog"></div>
-      </div>
+      <div class="lrow" id="lyr-ug-lines" onclick="toggleLyr('ug-lines')"><div class="lswatch" style="background:#2196f3;box-shadow:0 0 5px #2196f3"></div><div class="lname">UG Lines</div><div class="lcnt" id="cnt-ug-lines">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-oh-lines" onclick="toggleLyr('oh-lines')"><div class="lswatch" style="background:#f44336;box-shadow:0 0 5px #f44336"></div><div class="lname">OH Lines</div><div class="lcnt" id="cnt-oh-lines">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-points" onclick="toggleLyr('points')"><div class="lswatch dot" style="background:#0d1b2a;border-color:#00c8ff"></div><div class="lname">Cable Points</div><div class="lcnt" id="cnt-points">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-dp" onclick="toggleLyr('dp')"><div class="lswatch dot" style="background:#1a0033;border-color:#9c27b0"></div><div class="lname">DP Structures</div><div class="lcnt" id="cnt-dp">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-ab" onclick="toggleLyr('ab')"><div class="lswatch dot" style="background:#1a0a00;border-color:#ff9800"></div><div class="lname">AB Switches</div><div class="lcnt" id="cnt-ab">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-cut" onclick="toggleLyr('cut')"><div class="lswatch dot" style="background:#0d1b2a;border-color:#78909c"></div><div class="lname">Cut Points</div><div class="lcnt" id="cnt-cut">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-ss33" onclick="toggleLyr('ss33')"><div class="lswatch dot" style="background:#2196f3;border-color:#fff;border-radius:50%"></div><div class="lname">33/11KV SS</div><div class="lcnt" id="cnt-ss33">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-ehts" onclick="toggleLyr('ehts')"><div class="lswatch dot" style="background:#800080;border-color:#fff"></div><div class="lname">EHT SS</div><div class="lcnt" id="cnt-ehts">—</div><div class="tog"></div></div>
+      <div class="lrow" id="lyr-fsegs" onclick="toggleLyr('fsegs')"><div class="lswatch" style="background:#e8718d;height:2px"></div><div class="lname">Feeder Segments</div><div class="lcnt" id="cnt-fsegs">—</div><div class="tog"></div></div>
     </div>
   </div>
 
   <div class="rcard" id="rc-cable">
-    <div class="rcard-hd" onclick="toggleRcard('rc-cable')">
-      <span class="rcard-title">// CABLE TYPE</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
+    <div class="rcard-hd" onclick="toggleRcard('rc-cable')"><span class="rcard-title">// CABLE TYPE</span><span class="rcard-arrow">▾</span></div>
     <div class="rcard-body">
       <div class="pills">
         <div class="pill active" id="fp-all" style="color:#00c8ff;border-color:rgba(0,200,255,.35);background:rgba(0,200,255,.1)" onclick="setCableFilter('all')">ALL</div>
@@ -752,29 +501,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   </div>
 
   <div class="rcard" id="rc-stats">
-    <div class="rcard-hd" onclick="toggleRcard('rc-stats')">
-      <span class="rcard-title">// SECTION STATS</span>
-      <span class="rcard-arrow">▾</span>
-    </div>
+    <div class="rcard-hd" onclick="toggleRcard('rc-stats')"><span class="rcard-title">// SECTION STATS</span><span class="rcard-arrow">▾</span></div>
     <div class="rcard-body">
       <div class="strow"><span class="stlbl">Total Features</span><span class="stval" id="st-total">—</span></div>
       <div class="strow"><span class="stlbl">Visible Features</span><span class="stval" id="st-visible">—</span></div>
     </div>
   </div>
-
 </div>
 
 <script>
-// CORE SETUP & FULLSCREEN
+// IMPORTANT: preferCanvas MUST be false to allow CSS animations on map lines!
 const map = L.map('map',{
-  center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:true,
+  center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:false,
   zoomAnimation:true, fadeAnimation:true, markerZoomAnimation:true
 });
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
-// RIGHT PANEL CARD COLLAPSE
 function toggleRcard(id) {
   const card = document.getElementById(id);
   if(card) card.classList.toggle('collapsed');
@@ -782,15 +526,12 @@ function toggleRcard(id) {
 
 function toggleFullscreen() {
   if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => {
-      toast(`Fullscreen error: ${err.message}`);
-    });
+    document.documentElement.requestFullscreen().catch(err => toast(`Fullscreen error: ${err.message}`));
   } else {
     if (document.exitFullscreen) document.exitFullscreen();
   }
 }
 
-// Lazy tile factory 
 const _bmDefs = {
   dark:      ['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}],
   satellite: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:22}],
@@ -812,7 +553,6 @@ function setBM(name){
   toast(name.charAt(0).toUpperCase()+name.slice(1)+' basemap');
 }
 
-// DATA REGISTRY 
 const DATA_REGISTRY = [
   { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_1', type:'points', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
   { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_AB_Switch_2', type:'ab', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
@@ -894,12 +634,10 @@ const DATA_REGISTRY = [
   { varName:'json_FeederPoles_78', type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
   { varName:'json_Feeder_Segments_WEB_INTERACT_79', type:'fsegi', feeder:'Feeder Segments', cable:'-' },
   { varName:'json_Feeder_Segments_WEB_DISPLAY_80', type:'fsegd', feeder:'Feeder Segments Display', cable:'-' },
-  // json_Feeder_Segments_81 loaded deferred
   { varName:'json_EHTSSCOORDINATESWITHDATA_82', type:'ehts', feeder:'EHT SS', cable:'-' },
   { varName:'json_SS_WEB_INTERACT_83', type:'ehtsi', feeder:'EHT SS (Interactive)', cable:'-' },
 ];
 
-// VISIBILITY MANAGEMENT 
 const allLayers = []; 
 const feederNames = new Set();
 const feederState = {}; 
@@ -939,19 +677,14 @@ function updateVisibility() {
     }
   });
   document.getElementById('st-visible').textContent = visibleCount;
-  
-  // Call syncLabels after visibility changes to bind/unbind tooltips
   syncLabels();
 }
 
-// WHITE DYNAMIC POPUP BUILDER  (LAZY EVALUATED)
 function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
-  
   const hideKeys = ['id', 'layer', 'path', 'fid'];
 
-  // Hide the auto-generated 'popup' column ONLY for lines/segments
   if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
       hideKeys.push('popup');
   }
@@ -964,18 +697,13 @@ function popup(feat, regEntry){
   Object.keys(p).forEach(k => {
     if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
         let val = p[k];
-
         if (k.toLowerCase() === 'popup') {
             rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Notes:</strong><br>${val}</td></tr>`;
             return; 
         }
-
-        if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) {
-            val = parseFloat(val).toFixed(3);
-        }
+        if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) val = parseFloat(val).toFixed(3);
         if(k.toLowerCase().includes('length') || k.toLowerCase().includes('transitions')) val += ' km';
         if(k.toLowerCase().includes('total no.')) val += ' Nos';
-
         rows += `<tr><th>${k}</th><td>${val}</td></tr>`;
     }
   });
@@ -990,19 +718,14 @@ function popup(feat, regEntry){
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
   }
-
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
 
-// ICON FACTORY (Square markers only)
 function mkIcon(color, border, shape='square', char=''){
   const s = `width:12px;height:12px;border-radius:0px;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`;
-  return L.divIcon({className:'',
-    html:`<div style="${s};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:7px;color:${border}">${char}</div>`,
-    iconSize:[12,12],iconAnchor:[6,6]});
+  return L.divIcon({className:'', html:`<div style="${s};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:7px;color:${border}">${char}</div>`, iconSize:[12,12],iconAnchor:[6,6]});
 }
 
-// LOAD ALL DATA (OPTIMIZED WITH CANVAS)
 DATA_REGISTRY.forEach(reg => {
   try {
   const data = window[reg.varName];
@@ -1024,7 +747,6 @@ DATA_REGISTRY.forEach(reg => {
     let layer;
     let poleNoStr = null;
 
-    // ── MAIN BASE LINES ──
     if(reg.type==='lines' || reg.type.startsWith('fseg')){
       if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
         const coords = feat.geometry.type==='LineString'
@@ -1032,37 +754,32 @@ DATA_REGISTRY.forEach(reg => {
           : feat.geometry.coordinates.map(ls=>ls.map(c=>[c[1],c[0]]));
           
         let color = isOH ? '#f44336' : '#2196f3'; 
-        let weight = 4;
-        let opacity = 0.9;
         
+        // This is where ALL lines default to LIVE/FLOWING
         let cStatus = feederStatus[feederName] || 'live';
         let customClass = cStatus === 'live' ? 'feeder-flow' : (cStatus === 'breakdown' ? 'feeder-breakdown' : '');
 
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
-          {color, weight, opacity, smoothFactor:1.5, className: customClass});
+          {color: color, weight: 5, opacity: 0.9, smoothFactor:1.5, className: customClass});
           
-        layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
+        layer.on('mouseover',e=>{e.target.setStyle({weight:7,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{
             const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
-            e.target.setStyle({weight:4, opacity: isFocused ? 0.15 : 0.9});
+            e.target.setStyle({weight:5, opacity: isFocused ? 0.15 : 0.9});
         });
         
-        // LAZY POPUP BINDING
         layer.bindPopup(() => popup(feat, reg));
       }
     }
-    // ── POINTS, AB, DP, CUT, AND SUBSTATIONS ──
     else if(feat.geometry && (feat.geometry.type==='Point' || feat.geometry.type==='MultiPoint')){
       const coords = feat.geometry.type==='Point' ? feat.geometry.coordinates : feat.geometry.coordinates[0];
       const ll = [coords[1],coords[0]];
       
-      // GPU CANVAS RENDERING for standard points
       if(reg.type==='points' || reg.type==='fpoles'){
         layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2});
       } else if(reg.type==='cut'){
         layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 2});
       } 
-      // Keep HTML markers for square icons and Substations
       else if(reg.type==='ab' || reg.type==='dp'){
         layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
       } else if (reg.type.startsWith('ss33')) {
@@ -1074,16 +791,12 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        // LAZY POPUP BINDING
         layer.bindPopup(() => popup(feat, reg));
-
-        // Extract Pole Number but DO NOT bind it yet
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
                 poleNoStr = String(poleNo).trim();
             } else {
-                // SS Labels can be bound normally
                 const ssName = String(poleNo).replace('33/11KV ','').replace('33/11KV','').replace('132 KV ','').replace('132KV ','').trim();
                 layer.bindTooltip(ssName, {permanent:true, direction:'top', offset:[0,-16], className:'ss-label'});
             }
@@ -1096,9 +809,9 @@ DATA_REGISTRY.forEach(reg => {
       if(!feederLayerMap[feederName]) feederLayerMap[feederName] = [];
       feederLayerMap[feederName].push({layer, reg, cable:cableType});
     }
-    } catch(e){ /* skip bad feature */ }
+    } catch(e){}
   });
-  } catch(e){ console.warn('Layer error:', reg.varName, e); }
+  } catch(e){}
 });
 
 function updateCounts() {
@@ -1115,16 +828,8 @@ function updateCounts() {
 }
 
 const allCoords = [];
-allLayers.forEach(i => {
-  if (i.reg.type === 'lines' && i.layer.getLatLngs) {
-    const ll = i.layer.getLatLngs();
-    if(ll.length) allCoords.push(...ll.flat());
-  }
-});
-if(allCoords.length > 0){
-  try{ map.fitBounds(L.latLngBounds(allCoords),{padding:[60,60],maxZoom:17,animate:true}); }catch(e){}
-}
-
+allLayers.forEach(i => { if (i.reg.type === 'lines' && i.layer.getLatLngs) { const ll = i.layer.getLatLngs(); if(ll.length) allCoords.push(...ll.flat()); } });
+if(allCoords.length > 0){ try{ map.fitBounds(L.latLngBounds(allCoords),{padding:[60,60],maxZoom:17,animate:true}); }catch(e){} }
 
 let focusedFeeder = null;
 
@@ -1134,9 +839,7 @@ function setFeederStatus(fn, status, btnEl) {
   if(btnEl) {
     const bar = btnEl.closest('.fs-status-bar');
     if(bar) {
-      bar.querySelectorAll('.fs-status-btn').forEach(b => {
-        b.classList.remove('active-live','active-breakdown','active-idle');
-      });
+      bar.querySelectorAll('.fs-status-btn').forEach(b => b.classList.remove('active-live','active-breakdown','active-idle'));
       btnEl.classList.add('active-' + status);
     }
   }
@@ -1146,23 +849,24 @@ function setFeederStatus(fn, status, btnEl) {
     if(!item.layer.setStyle) return;
     const isLine = item.reg.type === 'lines' || (item.reg.type && item.reg.type.startsWith('fseg'));
     if(!isLine) return;
+    
     const baseColor = item.cable === 'OH' ? '#f44336' : '#2196f3';
     
     if(status === 'live') {
-      item.layer.setStyle({color: baseColor, weight:4, opacity:0.9});
-      if(item.layer.getElement) {
+      item.layer.setStyle({color: baseColor, weight:5, opacity:0.9});
+      if(item.layer.getElement && item.layer.getElement()) {
           item.layer.getElement().classList.remove('feeder-breakdown');
           item.layer.getElement().classList.add('feeder-flow');
       }
     } else if(status === 'breakdown') {
-      item.layer.setStyle({color:'#ff1744', weight:5, opacity:1});
-      if(item.layer.getElement) {
+      item.layer.setStyle({color:'#ff1744', weight:6, opacity:1});
+      if(item.layer.getElement && item.layer.getElement()) {
           item.layer.getElement().classList.remove('feeder-flow');
           item.layer.getElement().classList.add('feeder-breakdown');
       }
     } else if(status === 'idle') {
-      item.layer.setStyle({color:'#9e9e9e', weight:3, opacity:0.55});
-      if(item.layer.getElement) {
+      item.layer.setStyle({color:'#9e9e9e', weight:4, opacity:0.55});
+      if(item.layer.getElement && item.layer.getElement()) {
           item.layer.getElement().classList.remove('feeder-breakdown', 'feeder-flow');
       }
     }
@@ -1215,9 +919,7 @@ function focusFeeder(fn) {
     }
   });
   
-  if(coords.length > 0) {
-    map.flyToBounds(L.latLngBounds(coords), {padding:[50,50], animate:true, duration: 1.0});
-  }
+  if(coords.length > 0) map.flyToBounds(L.latLngBounds(coords), {padding:[50,50], animate:true, duration: 1.0});
   toast(`Focused on: ${fn.split('→')[1]?.trim() || fn}`);
 }
 
@@ -1308,25 +1010,16 @@ function togglePanel(){
   let dragging=false, startX=0, startW=0;
   handle.addEventListener('mousedown',e=>{
     dragging=true; startX=e.clientX; startW=panel.offsetWidth;
-    handle.classList.add('dragging');
-    document.body.style.cursor='col-resize';
-    document.body.style.userSelect='none';
-    e.preventDefault();
+    handle.classList.add('dragging'); document.body.style.cursor='col-resize'; document.body.style.userSelect='none'; e.preventDefault();
   });
   document.addEventListener('mousemove',e=>{
     if(!dragging) return;
     const w = Math.min(800, Math.max(200, startW + e.clientX - startX));
-    panel.style.width = w+'px';
-    ptab.style.left = w+'px';
-    legend.style.left = (w+10)+'px';
-    map.invalidateSize();
+    panel.style.width = w+'px'; ptab.style.left = w+'px'; legend.style.left = (w+10)+'px'; map.invalidateSize();
   });
   document.addEventListener('mouseup',()=>{
     if(!dragging) return;
-    dragging=false;
-    handle.classList.remove('dragging');
-    document.body.style.cursor='';
-    document.body.style.userSelect='';
+    dragging=false; handle.classList.remove('dragging'); document.body.style.cursor=''; document.body.style.userSelect='';
   });
 })();
 
@@ -1366,7 +1059,6 @@ function dismissLoader(){
   if(ov){ ov.classList.add('gone'); setTimeout(()=>ov.remove(),500); }
   map.invalidateSize();
   
-  // DEFERRED SEGMENT LOADING
   setTimeout(()=>{
     const s=document.createElement('script');
     s.src='data/Feeder_Segments_81.js';
@@ -1392,6 +1084,8 @@ function dismissLoader(){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
                 let fName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
+                
+                // DEFERRED SCRIPT ALSO DEFAULTS TO LIVE/FLOWING
                 let cStatus = feederStatus[fName] || 'live';
                 let customClass = cStatus === 'live' ? 'feeder-flow' : (cStatus === 'breakdown' ? 'feeder-breakdown' : '');
 
@@ -1403,7 +1097,6 @@ function dismissLoader(){
                     e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
                 });
                 
-                // LAZY POPUP
                 layer.bindPopup(() => popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
                 
                 allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: fName, cable: segCable, poleNo: null});
@@ -1414,7 +1107,7 @@ function dismissLoader(){
           updateVisibility();
           toast('Detailed Feeder Segments Loaded',1500);
         }
-      }catch(e){ console.warn('fsegs load error',e); }
+      }catch(e){}
     };
     document.head.appendChild(s);
   }, 1000);
@@ -1424,7 +1117,6 @@ setTimeout(()=>{
   dismissLoader();
   buildFeederChecks();
   updateCounts();
-  // Defer initial render to next idle frame
   (window.requestIdleCallback || setTimeout)(()=>{
     updateVisibility();
     syncLabels();
@@ -1433,14 +1125,12 @@ setTimeout(()=>{
 }, 600);
 setTimeout(()=>dismissLoader(), 5000);
 
-// ZOOM-BASED LABELS
 function syncLabels() {
   const z = map.getZoom();
   const showPoleLabels = z >= 17; 
   const showSSLabels = z >= 13;
 
   allLayers.forEach(item => {
-    // 1. Substation Labels
     if(item.reg.type.startsWith('ss') || item.reg.type.startsWith('eht')) {
         if(item.layer.getTooltip) {
             const tip = item.layer.getTooltip();
@@ -1450,7 +1140,6 @@ function syncLabels() {
             }
         }
     }
-    // 2. Pole Number Labels
     if(item.poleNo) {
         if(showPoleLabels && map.hasLayer(item.layer)) {
             if(!item.layer.getTooltip()) {
