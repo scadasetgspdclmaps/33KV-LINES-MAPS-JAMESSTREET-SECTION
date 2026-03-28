@@ -140,9 +140,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0;transition:all .3s}
 .chip-live{color:var(--ok);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)}
-.chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:blink .6s infinite}
-.chip-trip{color:var(--trip);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.1);animation:blink .4s infinite}
-@keyframes blink{50%{opacity:.35}}
+.chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:breakdown-blink .6s infinite}
+.chip-trip{color:var(--trip);border-color:rgba(255,171,0,.4);background:rgba(255,171,0,.1);animation:breakdown-blink .4s infinite}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -223,9 +222,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 #ptab:hover{background:rgba(0,200,255,.15)}
 #ptab.off{left:0 !important;}
 
-/* ══════════════════════════════════════════════════
-   SEARCH RADAR PING ANIMATION
-   ══════════════════════════════════════════════════ */
+/* SEARCH RADAR PING ANIMATION */
 .radar-ping {
   width: 40px; height: 40px;
   background: rgba(255, 23, 68, 0.6);
@@ -239,9 +236,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   100% { transform: scale(2.5); opacity: 0; }
 }
 
-/* ══════════════════════════════════════════════════
-   CLEAN WHITE POPUP
-   ══════════════════════════════════════════════════ */
+/* CLEAN WHITE POPUP */
 .leaflet-popup-content-wrapper {
   background: #ffffff !important;
   color: #333333 !important;
@@ -303,7 +298,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   font-weight: bold !important;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
   padding: 0 !important;
-  pointer-events: none; /* Make them pass-through so clicks hit the poles */
+  pointer-events: none;
 }
 
 /* Bottom bar & Legend */
@@ -422,12 +417,30 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   line-height:1;letter-spacing:.5px;
 }
 
-/* ── FEEDER STATUS COLOURS on feeder lines ── */
-@keyframes breakdown-pulse {
-  0%,100% { opacity:1; }
-  50%      { opacity:0.25; }
+/* ── FEEDER STATUS ANIMATIONS ── */
+@keyframes energy-flow {
+  from { stroke-dashoffset: 20; }
+  to   { stroke-dashoffset: 0; }
 }
-.feeder-breakdown { animation: breakdown-pulse 0.7s infinite; }
+
+@keyframes breakdown-blink {
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 10px #ff1744); }
+  50%      { opacity: 0; filter: none; }
+}
+
+/* Apply to normal/live lines for moving energy effect */
+.feeder-flow {
+  stroke-dasharray: 4, 16 !important;
+  stroke-linecap: round !important;
+  animation: energy-flow 0.8s linear infinite !important;
+}
+
+/* Apply to breakdown lines for full line blinking */
+.feeder-breakdown { 
+  stroke-dasharray: none !important;
+  animation: breakdown-blink 0.6s ease-in-out infinite !important; 
+}
+
 
 .fs-status-bar {
   display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee;
@@ -447,7 +460,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;
 }
 .f-badge-live      { background:rgba(0,200,83,.2);color:#00c853;border:1px solid #00c853; }
-.f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:breakdown-pulse 0.7s infinite; }
+.f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:breakdown-blink 0.6s infinite; }
 .f-badge-idle      { background:rgba(158,158,158,.2);color:#9e9e9e;border:1px solid #9e9e9e; }
 
 .status-legend {
@@ -460,7 +473,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .sl-row{display:flex;align-items:center;gap:6px;color:var(--text)}
 .sl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* ── RIGHT SIDE BASEMAP TABS ── */
+/* RIGHT SIDE BASEMAP TABS */
 #bm-tabs {
   position:fixed;
   top:50%;
@@ -505,7 +518,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   box-shadow: -3px 0 16px rgba(0,200,255,0.25);
 }
 
-/* ── RIGHT CONTROL PANEL ── */
+/* RIGHT CONTROL PANEL */
 #rpanel {
   position:fixed;top:52px;right:50px;bottom:38px;z-index:890;
   width:230px;
@@ -558,7 +571,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .fi-btn:hover { filter:brightness(1.4); }
 .fi-live.fi-active      { background:rgba(0,200,83,.25);color:#00c853;border-color:#00c853; }
-.fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:breakdown-pulse .7s infinite; }
+.fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:breakdown-blink .6s infinite; }
 .fi-idle.fi-active      { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
 
 /* Custom Map Labels */
@@ -617,8 +630,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
     </div>
     <div id="feederChecks" style="display:flex;flex-direction:column;gap:2px;margin-top:4px"></div>
   </div>
-
-
 </div><div id="map"></div>
 
 <div id="botbar">
@@ -642,7 +653,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 <div class="status-legend">
   <div style="font-family:var(--mono);font-size:8px;color:rgba(0,200,255,.6);letter-spacing:1.5px;margin-bottom:2px">// FEEDER STATUS</div>
   <div class="sl-row"><div class="sl-dot" style="background:#00c853"></div>Live</div>
-  <div class="sl-row"><div class="sl-dot" style="background:#ff1744;animation:breakdown-pulse .7s infinite"></div>Breakdown</div>
+  <div class="sl-row"><div class="sl-dot" style="background:#ff1744;animation:breakdown-blink .6s infinite"></div>Breakdown</div>
   <div class="sl-row"><div class="sl-dot" style="background:#9e9e9e"></div>Idle</div>
   <div class="sl-row" style="margin-top:4px">
     <div style="width:12px;height:12px;border-radius:50%;border:2px dashed rgba(0,180,255,0.9);display:flex;align-items:center;justify-content:center;font-size:6px;color:#fff;animation:ss33-ring-spin 4s linear infinite;flex-shrink:0">⚡</div>
@@ -754,9 +765,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 </div>
 
 <script>
-// ══════════════════════════════════════════════════
-//  CORE SETUP & FULLSCREEN
-// ══════════════════════════════════════════════════
+// CORE SETUP & FULLSCREEN
 const map = L.map('map',{
   center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:true,
   zoomAnimation:true, fadeAnimation:true, markerZoomAnimation:true
@@ -765,8 +774,7 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
-
-// ── RIGHT PANEL CARD COLLAPSE ──
+// RIGHT PANEL CARD COLLAPSE
 function toggleRcard(id) {
   const card = document.getElementById(id);
   if(card) card.classList.toggle('collapsed');
@@ -804,9 +812,7 @@ function setBM(name){
   toast(name.charAt(0).toUpperCase()+name.slice(1)+' basemap');
 }
 
-// ══════════════════════════════════════════════════
-//  DATA REGISTRY 
-// ══════════════════════════════════════════════════
+// DATA REGISTRY 
 const DATA_REGISTRY = [
   { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_1', type:'points', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
   { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_AB_Switch_2', type:'ab', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
@@ -893,9 +899,7 @@ const DATA_REGISTRY = [
   { varName:'json_SS_WEB_INTERACT_83', type:'ehtsi', feeder:'EHT SS (Interactive)', cable:'-' },
 ];
 
-// ══════════════════════════════════════════════════
-//  VISIBILITY MANAGEMENT 
-// ══════════════════════════════════════════════════
+// VISIBILITY MANAGEMENT 
 const allLayers = []; 
 const feederNames = new Set();
 const feederState = {}; 
@@ -940,17 +944,14 @@ function updateVisibility() {
   syncLabels();
 }
 
-// ══════════════════════════════════════════════════
-//  WHITE DYNAMIC POPUP BUILDER  (LAZY EVALUATED)
-// ══════════════════════════════════════════════════
+// WHITE DYNAMIC POPUP BUILDER  (LAZY EVALUATED)
 function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
   
   const hideKeys = ['id', 'layer', 'path', 'fid'];
 
-  // FIX: Hide the auto-generated 'popup' column ONLY for lines/segments to prevent double data.
-  // We keep it for Substations so your custom notes still appear.
+  // Hide the auto-generated 'popup' column ONLY for lines/segments
   if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
       hideKeys.push('popup');
   }
@@ -993,9 +994,7 @@ function popup(feat, regEntry){
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
 
-// ══════════════════════════════════════════════════
-//  ICON FACTORY (Square markers only)
-// ══════════════════════════════════════════════════
+// ICON FACTORY (Square markers only)
 function mkIcon(color, border, shape='square', char=''){
   const s = `width:12px;height:12px;border-radius:0px;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`;
   return L.divIcon({className:'',
@@ -1003,9 +1002,7 @@ function mkIcon(color, border, shape='square', char=''){
     iconSize:[12,12],iconAnchor:[6,6]});
 }
 
-// ══════════════════════════════════════════════════
-//  LOAD ALL DATA (OPTIMIZED WITH CANVAS)
-// ══════════════════════════════════════════════════
+// LOAD ALL DATA (OPTIMIZED WITH CANVAS)
 DATA_REGISTRY.forEach(reg => {
   try {
   const data = window[reg.varName];
@@ -1037,9 +1034,12 @@ DATA_REGISTRY.forEach(reg => {
         let color = isOH ? '#f44336' : '#2196f3'; 
         let weight = 4;
         let opacity = 0.9;
+        
+        let cStatus = feederStatus[feederName] || 'live';
+        let customClass = cStatus === 'live' ? 'feeder-flow' : (cStatus === 'breakdown' ? 'feeder-breakdown' : '');
 
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
-          {color, weight, opacity, smoothFactor:1.5});
+          {color, weight, opacity, smoothFactor:1.5, className: customClass});
           
         layer.on('mouseover',e=>{e.target.setStyle({weight:6,opacity:1});layer.bringToFront()});
         layer.on('mouseout', e=>{
@@ -1077,7 +1077,7 @@ DATA_REGISTRY.forEach(reg => {
         // LAZY POPUP BINDING
         layer.bindPopup(() => popup(feat, reg));
 
-        // Extract Pole Number but DO NOT bind it yet (Zoom-based binding avoids DOM crash)
+        // Extract Pole Number but DO NOT bind it yet
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
@@ -1147,15 +1147,24 @@ function setFeederStatus(fn, status, btnEl) {
     const isLine = item.reg.type === 'lines' || (item.reg.type && item.reg.type.startsWith('fseg'));
     if(!isLine) return;
     const baseColor = item.cable === 'OH' ? '#f44336' : '#2196f3';
+    
     if(status === 'live') {
-      item.layer.setStyle({color: baseColor, weight:4, opacity:0.9, dashArray:null});
-      item.layer.getElement && item.layer.getElement() && item.layer.getElement().classList.remove('feeder-breakdown');
+      item.layer.setStyle({color: baseColor, weight:4, opacity:0.9});
+      if(item.layer.getElement) {
+          item.layer.getElement().classList.remove('feeder-breakdown');
+          item.layer.getElement().classList.add('feeder-flow');
+      }
     } else if(status === 'breakdown') {
-      item.layer.setStyle({color:'#ff1744', weight:5, opacity:1, dashArray:'10 5'});
-      if(item.layer._path) item.layer._path.classList.add('feeder-breakdown');
+      item.layer.setStyle({color:'#ff1744', weight:5, opacity:1});
+      if(item.layer.getElement) {
+          item.layer.getElement().classList.remove('feeder-flow');
+          item.layer.getElement().classList.add('feeder-breakdown');
+      }
     } else if(status === 'idle') {
-      item.layer.setStyle({color:'#9e9e9e', weight:3, opacity:0.55, dashArray:null});
-      if(item.layer._path) item.layer._path.classList.remove('feeder-breakdown');
+      item.layer.setStyle({color:'#9e9e9e', weight:3, opacity:0.55});
+      if(item.layer.getElement) {
+          item.layer.getElement().classList.remove('feeder-breakdown', 'feeder-flow');
+      }
     }
   });
 
@@ -1382,7 +1391,11 @@ function dismissLoader(){
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
-                const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9});
+                let fName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
+                let cStatus = feederStatus[fName] || 'live';
+                let customClass = cStatus === 'live' ? 'feeder-flow' : (cStatus === 'breakdown' ? 'feeder-breakdown' : '');
+
+                const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9, className: customClass});
                 
                 layer.on('mouseover',e=>{e.target.setStyle({weight:8,opacity:1});});
                 layer.on('mouseout',e=>{
@@ -1393,7 +1406,7 @@ function dismissLoader(){
                 // LAZY POPUP
                 layer.bindPopup(() => popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
                 
-                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments', cable: segCable, poleNo: null});
+                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: fName, cable: segCable, poleNo: null});
               }
             } catch(e){}
           });
@@ -1411,7 +1424,7 @@ setTimeout(()=>{
   dismissLoader();
   buildFeederChecks();
   updateCounts();
-  // Defer initial render to next idle frame — map shows faster
+  // Defer initial render to next idle frame
   (window.requestIdleCallback || setTimeout)(()=>{
     updateVisibility();
     syncLabels();
@@ -1420,7 +1433,7 @@ setTimeout(()=>{
 }, 600);
 setTimeout(()=>dismissLoader(), 5000);
 
-// ── ZOOM-BASED LABELS ──
+// ZOOM-BASED LABELS
 function syncLabels() {
   const z = map.getZoom();
   const showPoleLabels = z >= 17; 
