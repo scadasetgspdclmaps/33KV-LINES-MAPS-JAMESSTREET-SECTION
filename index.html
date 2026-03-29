@@ -253,6 +253,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .popup-table th { font-weight: 700; width: 50%; padding-right: 10px; text-align: left; }
 .popup-table td { text-align: left; word-break: break-word; }
 
+/* MAP LABELS - ensure they never block clicks */
 .pole-label {
   background: transparent !important;
   border: none !important;
@@ -263,7 +264,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   font-weight: bold !important;
   text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000 !important;
   padding: 0 !important;
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
 /* Bottom bar & Legend */
@@ -349,6 +350,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   animation: sos-blink 0.8s ease-in-out infinite !important; 
 }
 
+/* Helper to vanish flowing dots completely */
+.hidden-flow { display: none !important; }
+
 
 .fs-status-bar { display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee; }
 .fs-status-btn { flex:1;padding:5px 3px;border-radius:5px;border:1px solid #ccc; font-size:10px;font-weight:700;cursor:pointer;text-align:center; font-family:Arial,sans-serif;transition:all 0.2s; }
@@ -399,8 +403,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:sos-blink 0.8s infinite; }
 .fi-idle.fi-active      { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
 
-/* Custom Map Labels */
-.ss-label{ background:rgba(9,22,37,.88)!important; border:1px solid rgba(0,200,255,.35)!important; border-radius:4px!important; color:#00c8ff!important; font-family:'Share Tech Mono',monospace!important; font-weight:normal; font-size:9px!important; letter-spacing:.3px!important; padding:2px 5px!important; white-space:nowrap!important; box-shadow:0 2px 6px rgba(0,0,0,.4)!important; opacity:0.9!important; max-width:120px!important; overflow:hidden!important; text-overflow:ellipsis!important; }
+/* Custom Map Labels - ensure they never block clicks */
+.ss-label{ background:rgba(9,22,37,.88)!important; border:1px solid rgba(0,200,255,.35)!important; border-radius:4px!important; color:#00c8ff!important; font-family:'Share Tech Mono',monospace!important; font-weight:normal; font-size:9px!important; letter-spacing:.3px!important; padding:2px 5px!important; white-space:nowrap!important; box-shadow:0 2px 6px rgba(0,0,0,.4)!important; opacity:0.9!important; max-width:120px!important; overflow:hidden!important; text-overflow:ellipsis!important; pointer-events: none !important;}
 .ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
 </style>
 </head>
@@ -523,6 +527,11 @@ const map = L.map('map',{
   center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:false,
   zoomAnimation:true, fadeAnimation:true, markerZoomAnimation:true
 });
+
+// CRITICAL FIX: Create a custom Z-index pane so poles always render ON TOP of lines
+map.createPane('pointsPane');
+map.getPane('pointsPane').style.zIndex = 650; // 400 is lines, 600 is markers. This is the very top!
+
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
@@ -786,8 +795,9 @@ DATA_REGISTRY.forEach(reg => {
         
         layer.flowLayer = flowLayer;
 
-        // THE BULLETPROOF CLICK HANDLER
+        // THE BULLETPROOF CLICK HANDLER FOR LINES
         layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
             L.popup({className: 'custom-popup-style'})
              .setLatLng(e.latlng)
              .setContent(popup(feat, reg))
@@ -814,10 +824,11 @@ DATA_REGISTRY.forEach(reg => {
       const coords = feat.geometry.type==='Point' ? feat.geometry.coordinates : feat.geometry.coordinates[0];
       const ll = [coords[1],coords[0]];
       
+      // CRITICAL FIX: ALL points use pane: 'pointsPane' to physically elevate them above lines
       if(reg.type==='points' || reg.type==='fpoles'){
-        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2});
+        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2, pane: 'pointsPane'});
       } else if(reg.type==='cut'){
-        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 2});
+        layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 2, pane: 'pointsPane'});
       } 
       else if(reg.type==='ab' || reg.type==='dp'){
         layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
@@ -830,8 +841,18 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        // Points don't detach on hover, so standard bindPopup is safe here
-        layer.bindPopup(popup(feat, reg));
+        
+        // THE BULLETPROOF CLICK HANDLER FOR POLES/POINTS
+        layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            const latlng = e.latlng || (typeof layer.getLatLng === 'function' ? layer.getLatLng() : null);
+            if(latlng) {
+                L.popup({className: 'custom-popup-style'})
+                 .setLatLng(latlng)
+                 .setContent(popup(feat, reg))
+                 .openOn(map);
+            }
+        });
         
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
@@ -926,7 +947,6 @@ function setFeederStatus(fn, status, btnEl) {
     }
   });
 
-  // Re-sync all popups inside the map if they are currently open
   document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
@@ -1161,13 +1181,14 @@ function dismissLoader(){
                 
                 let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
                 let flowLayer = L.polyline(coords, {
-                    color: '#ffffff', weight: 3, className: flowClass, interactive: false // FIX: Must be false!
+                    color: '#ffffff', weight: 3, className: flowClass, interactive: false 
                 });
                 layer.flowLayer = flowLayer;
 
                 // THE BULLETPROOF CLICK HANDLER
                 const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
                 layer.on('click', function(e) {
+                    L.DomEvent.stopPropagation(e);
                     L.popup({className: 'custom-popup-style'})
                      .setLatLng(e.latlng)
                      .setContent(popup(feat, regData))
