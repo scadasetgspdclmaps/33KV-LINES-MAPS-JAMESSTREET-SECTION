@@ -140,7 +140,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 .chip{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:20px;border:1px solid;white-space:nowrap;flex-shrink:0;transition:all .3s}
 .chip-live{color:var(--ok);border-color:rgba(0,230,118,.35);background:rgba(0,230,118,.08)}
-.chip-fault{color:var(--fault);border-color:rgba(255,23,68,.4);background:rgba(255,23,68,.1);animation:sos-blink 1.5s infinite}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -256,6 +255,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .leaflet-popup-close-button:hover { color: #000 !important; }
 
+/* The HTML Table formatting */
 .pc-header-id {
   font-family: Arial, sans-serif;
   font-size: 13px;
@@ -347,95 +347,41 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 
 /* ── ANIMATED 33/11KV SS SYMBOL ── */
-@keyframes ss33-ring-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes ss33-core-pulse {
-  0%,100% { transform: scale(1);   opacity:1; }
-  50%      { transform: scale(1.15); opacity:.85; }
-}
-@keyframes eht-ring-pulse {
-  0%,100% { box-shadow: 0 0 0 0 rgba(255,100,0,0.7), 0 0 8px rgba(255,100,0,0.5); }
-  60%      { box-shadow: 0 0 0 8px rgba(255,100,0,0),  0 0 20px rgba(255,100,0,0.8); }
-}
+@keyframes ss33-ring-spin { from { transform: rotate(0deg); } to   { transform: rotate(360deg); } }
+@keyframes ss33-core-pulse { 0%,100% { transform: scale(1);   opacity:1; } 50%      { transform: scale(1.15); opacity:.85; } }
+@keyframes eht-ring-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,100,0,0.7), 0 0 8px rgba(255,100,0,0.5); } 60%      { box-shadow: 0 0 0 8px rgba(255,100,0,0),  0 0 20px rgba(255,100,0,0.8); } }
 
-.ss33-wrap {
-  position:relative;
-  width:36px;height:36px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-}
-.ss33-ring {
-  position:absolute;inset:0;
-  border-radius:50%;
-  border:2px dashed rgba(0,180,255,0.9);
-  animation: ss33-ring-spin 4s linear infinite;
-  box-shadow: 0 0 8px rgba(0,180,255,0.5), inset 0 0 8px rgba(0,180,255,0.15);
-}
-.ss33-core {
-  width:22px;height:22px;border-radius:50%;
-  background:radial-gradient(circle, #1e88e5 0%, #0d47a1 100%);
-  border:2px solid rgba(255,255,255,0.9);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 10px rgba(33,150,243,0.8);
-  animation: ss33-core-pulse 2s ease-in-out infinite;
-  z-index:1;
-}
-.ss33-bolt {
-  font-size:11px;line-height:1;color:#fff;
-  text-shadow:0 0 4px #fff;
-  margin-top:-1px;
-}
+.ss33-wrap { position:relative; width:36px;height:36px; display:flex;align-items:center;justify-content:center; cursor:pointer; }
+.ss33-ring { position:absolute;inset:0; border-radius:50%; border:2px dashed rgba(0,180,255,0.9); animation: ss33-ring-spin 4s linear infinite; box-shadow: 0 0 8px rgba(0,180,255,0.5), inset 0 0 8px rgba(0,180,255,0.15); }
+.ss33-core { width:22px;height:22px;border-radius:50%; background:radial-gradient(circle, #1e88e5 0%, #0d47a1 100%); border:2px solid rgba(255,255,255,0.9); display:flex;align-items:center;justify-content:center; box-shadow:0 0 10px rgba(33,150,243,0.8); animation: ss33-core-pulse 2s ease-in-out infinite; z-index:1; }
+.ss33-bolt { font-size:11px;line-height:1;color:#fff; text-shadow:0 0 4px #fff; margin-top:-1px; }
 
-.eht-wrap {
-  position:relative;
-  width:40px;height:28px;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;
-}
-.eht-rect {
-  position:absolute;inset:0;
-  border:2px solid rgba(255,120,0,0.95);
-  border-radius:4px;
-  animation: eht-ring-pulse 1.8s ease-in-out infinite;
-  background:rgba(30,10,0,0.75);
-}
-.eht-core {
-  z-index:1;
-  display:flex;align-items:center;justify-content:center;
-  gap:3px;
-}
-.eht-power {
-  font-size:16px;line-height:1;
-  filter: drop-shadow(0 0 4px #ff6600);
-}
-.eht-kv {
-  font-family:var(--mono);font-size:7px;color:rgba(255,160,60,0.9);
-  line-height:1;letter-spacing:.5px;
-}
+.eht-wrap { position:relative; width:40px;height:28px; display:flex;align-items:center;justify-content:center; cursor:pointer; }
+.eht-rect { position:absolute;inset:0; border:2px solid rgba(255,120,0,0.95); border-radius:4px; animation: eht-ring-pulse 1.8s ease-in-out infinite; background:rgba(30,10,0,0.75); }
+.eht-core { z-index:1; display:flex;align-items:center;justify-content:center; gap:3px; }
+.eht-power { font-size:16px;line-height:1; filter: drop-shadow(0 0 4px #ff6600); }
+.eht-kv { font-family:var(--mono);font-size:7px;color:rgba(255,160,60,0.9); line-height:1;letter-spacing:.5px; }
 
-/* ── NEW STATUS ANIMATIONS ── */
 
-/* 1. Normal/Live (Overlay Points Flow) */
-@keyframes energy-flow-overlay {
-  to { stroke-dashoffset: -24; }
-}
+/* ── 1. NORMAL/LIVE (OVERLAY FLOW) ── */
+@keyframes energy-flow-overlay { to { stroke-dashoffset: -24; } }
 .feeder-flow-overlay {
-  stroke-dasharray: 4 20 !important; /* Dot size and spacing */
+  stroke-dasharray: 4 20 !important;
   stroke-linecap: round !important;
   animation: energy-flow-overlay 0.8s linear infinite !important;
 }
 
-/* 2. Breakdown (SOS Urgent Blink) */
+/* ── 2. BREAKDOWN (SOS URGENT BLINK) ── */
 @keyframes sos-blink {
-  0%, 20%, 40% { opacity: 1; filter: drop-shadow(0 0 10px #ff1744); }
-  10%, 30%, 50% { opacity: 0.15; filter: none; }
-  60%, 100% { opacity: 1; filter: drop-shadow(0 0 10px #ff1744); } /* Pause interval */
+  0%, 100% { opacity: 1; filter: drop-shadow(0 0 12px #ff1744); }
+  50%      { opacity: 0.2; filter: none; }
 }
 .feeder-breakdown { 
-  animation: sos-blink 1.5s infinite !important; 
+  animation: sos-blink 0.8s ease-in-out infinite !important; 
 }
+
+/* Hard toggle class to instantly vanish the flowing dots */
+.hidden-flow { display: none !important; }
 
 
 .fs-status-bar {
@@ -456,7 +402,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   font-family:var(--mono);letter-spacing:.5px;flex-shrink:0;
 }
 .f-badge-live      { background:rgba(0,200,83,.2);color:#00c853;border:1px solid #00c853; }
-.f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:sos-blink 1.5s infinite; }
+.f-badge-breakdown { background:rgba(255,23,68,.2);color:#ff1744;border:1px solid #ff1744;animation:sos-blink 0.8s infinite; }
 .f-badge-idle      { background:rgba(158,158,158,.2);color:#9e9e9e;border:1px solid #9e9e9e; }
 
 .status-legend {
@@ -471,68 +417,34 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 
 /* RIGHT SIDE BASEMAP TABS */
 #bm-tabs {
-  position:fixed;
-  top:50%;
-  right:0;
-  transform:translateY(-50%);
-  z-index:950;
-  display:flex;
-  flex-direction:column;
-  gap:2px;
+  position:fixed; top:50%; right:0; transform:translateY(-50%);
+  z-index:950; display:flex; flex-direction:column; gap:2px;
 }
 .bm-tab {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  transform: rotate(180deg);
-  background: linear-gradient(180deg,#0a1828f0,#0d1f33f0);
-  border: 1px solid var(--border);
-  border-right: none;
-  border-radius: 8px 0 0 8px;
-  padding: 14px 7px;
-  font-family: var(--mono);
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all 0.2s var(--ease);
-  white-space: nowrap;
-  backdrop-filter: blur(12px);
-  box-shadow: -3px 0 12px rgba(0,0,0,0.3);
+  writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+  background: linear-gradient(180deg,#0a1828f0,#0d1f33f0); border: 1px solid var(--border);
+  border-right: none; border-radius: 8px 0 0 8px; padding: 14px 7px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 1.5px;
+  color: var(--text); cursor: pointer; transition: all 0.2s var(--ease);
+  white-space: nowrap; backdrop-filter: blur(12px); box-shadow: -3px 0 12px rgba(0,0,0,0.3);
   user-select: none;
 }
-.bm-tab:hover {
-  background: rgba(0,200,255,0.15);
-  color: var(--live);
-  border-color: var(--live);
-  padding-right: 11px;
-}
-.bm-tab.active {
-  background: rgba(0,200,255,0.2);
-  color: var(--live);
-  border-color: var(--live);
-  font-weight: 700;
-  box-shadow: -3px 0 16px rgba(0,200,255,0.25);
-}
+.bm-tab:hover { background: rgba(0,200,255,0.15); color: var(--live); border-color: var(--live); padding-right: 11px; }
+.bm-tab.active { background: rgba(0,200,255,0.2); color: var(--live); border-color: var(--live); font-weight: 700; box-shadow: -3px 0 16px rgba(0,200,255,0.25); }
 
 /* RIGHT CONTROL PANEL */
 #rpanel {
   position:fixed;top:52px;right:50px;bottom:38px;z-index:890;
-  width:230px;
-  display:flex;flex-direction:column;gap:6px;
-  pointer-events:none; 
-  overflow-y:auto;overflow-x:hidden;padding:8px 4px;
+  width:230px; display:flex;flex-direction:column;gap:6px;
+  pointer-events:none; overflow-y:auto;overflow-x:hidden;padding:8px 4px;
 }
 #rpanel::-webkit-scrollbar{width:3px}
 #rpanel::-webkit-scrollbar-thumb{background:rgba(0,200,255,.2);border-radius:3px}
 
 .rcard {
-  pointer-events:all;
-  background:linear-gradient(135deg,#0a1828f4,#0d1f33f4);
-  backdrop-filter:blur(18px);
-  border:1px solid var(--border);
-  border-radius:10px;
-  overflow:hidden;
-  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  pointer-events:all; background:linear-gradient(135deg,#0a1828f4,#0d1f33f4);
+  backdrop-filter:blur(18px); border:1px solid var(--border);
+  border-radius:10px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,.35);
   transition:box-shadow .2s;
 }
 .rcard:hover { box-shadow:0 4px 24px rgba(0,200,255,.12); }
@@ -540,23 +452,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .rcard-hd {
   display:flex;align-items:center;justify-content:space-between;
   padding:8px 12px;cursor:pointer;user-select:none;
-  border-bottom:1px solid transparent;
-  transition:border-color .2s;
+  border-bottom:1px solid transparent; transition:border-color .2s;
 }
 .rcard-hd:hover { border-bottom-color:rgba(0,200,255,.15); }
-.rcard-title {
-  font-family:var(--mono);font-size:9px;letter-spacing:2px;
-  color:rgba(0,200,255,.65);
-}
-.rcard-arrow {
-  font-size:10px;color:rgba(0,200,255,.45);
-  transition:transform .25s var(--ease);
-}
+.rcard-title { font-family:var(--mono);font-size:9px;letter-spacing:2px; color:rgba(0,200,255,.65); }
+.rcard-arrow { font-size:10px;color:rgba(0,200,255,.45); transition:transform .25s var(--ease); }
 .rcard.collapsed .rcard-arrow { transform:rotate(-90deg); }
-.rcard-body {
-  padding:8px 10px 10px;
-  border-top:1px solid rgba(0,200,255,.07);
-}
+.rcard-body { padding:8px 10px 10px; border-top:1px solid rgba(0,200,255,.07); }
 .rcard.collapsed .rcard-body { display:none; }
 
 .fi-btn {
@@ -567,7 +469,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 }
 .fi-btn:hover { filter:brightness(1.4); }
 .fi-live.fi-active      { background:rgba(0,200,83,.25);color:#00c853;border-color:#00c853; }
-.fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:sos-blink 1.5s infinite; }
+.fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:sos-blink 0.8s infinite; }
 .fi-idle.fi-active      { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
 
 /* Custom Map Labels */
@@ -577,16 +479,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   border-radius:4px!important;
   color:#00c8ff!important;
   font-family:'Share Tech Mono',monospace!important;
-  font-weight:normal;
-  font-size:9px!important;
-  letter-spacing:.3px!important;
-  padding:2px 5px!important;
-  white-space:nowrap!important;
-  box-shadow:0 2px 6px rgba(0,0,0,.4)!important;
-  opacity:0.9!important;
-  max-width:120px!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
+  font-weight:normal; font-size:9px!important; letter-spacing:.3px!important;
+  padding:2px 5px!important; white-space:nowrap!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.4)!important; opacity:0.9!important;
+  max-width:120px!important; overflow:hidden!important; text-overflow:ellipsis!important;
 }
 .ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
 </style>
@@ -649,7 +545,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 <div class="status-legend">
   <div style="font-family:var(--mono);font-size:8px;color:rgba(0,200,255,.6);letter-spacing:1.5px;margin-bottom:2px">// FEEDER STATUS</div>
   <div class="sl-row"><div class="sl-dot" style="background:#00c853"></div>Live</div>
-  <div class="sl-row"><div class="sl-dot" style="background:#ff1744;animation:sos-blink 1.5s infinite"></div>Breakdown</div>
+  <div class="sl-row"><div class="sl-dot" style="background:#ff1744;animation:sos-blink 0.8s infinite"></div>Breakdown</div>
   <div class="sl-row"><div class="sl-dot" style="background:#9e9e9e"></div>Idle</div>
   <div class="sl-row" style="margin-top:4px">
     <div style="width:12px;height:12px;border-radius:50%;border:2px dashed rgba(0,180,255,0.9);display:flex;align-items:center;justify-content:center;font-size:6px;color:#fff;animation:ss33-ring-spin 4s linear infinite;flex-shrink:0">⚡</div>
@@ -867,7 +763,7 @@ function updateVisibility() {
     if (shouldShow) {
       if (!map.hasLayer(item.layer)) map.addLayer(item.layer);
       
-      // Also show the overlay dot line if it exists
+      // Show overlay if it should be visible
       if (item.layer.flowLayer && !map.hasLayer(item.layer.flowLayer)) {
           map.addLayer(item.layer.flowLayer);
       }
@@ -875,7 +771,6 @@ function updateVisibility() {
     } else {
       if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
       
-      // Also hide the overlay dot line
       if (item.layer.flowLayer && map.hasLayer(item.layer.flowLayer)) {
           map.removeLayer(item.layer.flowLayer);
       }
@@ -885,11 +780,15 @@ function updateVisibility() {
   syncLabels();
 }
 
-// Ensure the popup function displays all your data cleanly
+// Generates the clean popup HTML table with dynamically updating buttons
 function popup(feat, regEntry){
   const p = feat.properties || {};
   let rows = '';
   const hideKeys = ['id', 'layer', 'path', 'fid'];
+
+  if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
+      hideKeys.push('popup');
+  }
 
   let headerId = '';
   if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) {
@@ -958,45 +857,31 @@ DATA_REGISTRY.forEach(reg => {
         let color = isOH ? '#f44336' : '#2196f3'; 
         let cStatus = feederStatus[feederName] || 'live';
         
-        // 1. Create the solid BASE LINE
+        // 1. BASE LAYER (Solid Color, Handles Clicks)
         let customClass = cStatus === 'breakdown' ? 'feeder-breakdown' : '';
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
           {color: color, weight: 6, opacity: 0.9, smoothFactor:1.5, className: customClass});
           
-        // 2. Create the floating OVERLAY LINE for the dots
-        // FIX: We do NOT use interactive: false here. We let it catch clicks!
+        // 2. OVERLAY LAYER (White Dots)
+        // CRITICAL FIX: interactive: false makes it invisible to mouse clicks!
+        let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         let flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
-            color: '#ffffff',
-            weight: 3, 
-            opacity: cStatus === 'live' ? 0.9 : 0, 
-            className: 'feeder-flow-overlay'
+            color: '#ffffff', weight: 3, className: flowClass, interactive: false 
         });
         
-        // Tie them together so they can be toggled easily
         layer.flowLayer = flowLayer;
 
-        // BIND POPUP TO BOTH THE BASE LINE AND THE DOTS
-        layer.bindPopup(() => popup(feat, reg));
-        flowLayer.bindPopup(() => popup(feat, reg));
+        // EAGER EVALUATION: Binds immediately so the click always works
+        layer.bindPopup(popup(feat, reg));
+        // UPDATE HOOK: Ensures buttons inside popup reflect current status when opened
+        layer.on('popupopen', () => layer.setPopupContent(popup(feat, reg)));
 
-        // When you hover over the dots, highlight both!
-        flowLayer.on('mouseover', e => {
-            layer.setStyle({weight:8,opacity:1});
-            layer.bringToFront();
-            flowLayer.bringToFront();
-        });
-        flowLayer.on('mouseout', e => {
-            const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
-            layer.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
-        });
-
-        // When you hover over the base line, highlight both!
-        layer.on('mouseover',e=>{
-            e.target.setStyle({weight:8,opacity:1});
+        layer.on('mouseover', e => {
+            e.target.setStyle({weight:8, opacity:1});
             e.target.bringToFront();
             if(e.target.flowLayer) e.target.flowLayer.bringToFront();
         });
-        layer.on('mouseout', e=>{
+        layer.on('mouseout', e => {
             const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
             e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
         });
@@ -1022,7 +907,7 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(() => popup(feat, reg));
+        layer.bindPopup(popup(feat, reg));
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
@@ -1064,7 +949,7 @@ if(allCoords.length > 0){ try{ map.fitBounds(L.latLngBounds(allCoords),{padding:
 
 let focusedFeeder = null;
 
-// Core Logic update for the 3 visual states
+// ── CORE LOGIC: THE 3 VISUAL STATES ──
 function setFeederStatus(fn, status, btnEl) {
   feederStatus[fn] = status;
 
@@ -1084,24 +969,35 @@ function setFeederStatus(fn, status, btnEl) {
     
     const baseColor = item.cable === 'OH' ? '#f44336' : '#2196f3';
     
-    // Control both the Base Line and the Overlay Line depending on the state
     if(status === 'live') {
-      // Normal Line, Show Points Flowing
+      // LIVE: Solid line, Dots Flowing
       item.layer.setStyle({color: baseColor, weight:6, opacity:0.9});
-      if(item.layer.getElement) item.layer.getElement().classList.remove('feeder-breakdown');
-      if(item.layer.flowLayer) item.layer.flowLayer.setStyle({opacity: 0.9}); 
+      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.remove('feeder-breakdown');
+      
+      if(item.layer.flowLayer) {
+          item.layer.flowLayer.options.className = 'feeder-flow-overlay';
+          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.remove('hidden-flow');
+      }
       
     } else if(status === 'breakdown') {
-      // Blinking Line, No Points Flowing
+      // BREAKDOWN: Red SOS Blink, ZERO Dots
       item.layer.setStyle({color:'#ff1744', weight:7, opacity:1});
-      if(item.layer.getElement) item.layer.getElement().classList.add('feeder-breakdown');
-      if(item.layer.flowLayer) item.layer.flowLayer.setStyle({opacity: 0}); 
+      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.add('feeder-breakdown');
+      
+      if(item.layer.flowLayer) {
+          item.layer.flowLayer.options.className = 'feeder-flow-overlay hidden-flow';
+          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.add('hidden-flow'); // Hard hide dots
+      }
       
     } else if(status === 'idle') {
-      // Solid Line, No blinking, No Points Flowing
+      // IDLE: Grey static line, ZERO Dots
       item.layer.setStyle({color:'#9e9e9e', weight:5, opacity:0.6});
-      if(item.layer.getElement) item.layer.getElement().classList.remove('feeder-breakdown');
-      if(item.layer.flowLayer) item.layer.flowLayer.setStyle({opacity: 0}); 
+      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.remove('feeder-breakdown');
+      
+      if(item.layer.flowLayer) {
+          item.layer.flowLayer.options.className = 'feeder-flow-overlay hidden-flow';
+          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.add('hidden-flow'); // Hard hide dots
+      }
     }
   });
 
@@ -1131,7 +1027,9 @@ function focusFeeder(fn) {
         if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) {
             i.layer.setStyle({opacity: 0.9});
             let cStatus = feederStatus[i.feederName] || 'live';
-            if(i.layer.flowLayer) i.layer.flowLayer.setStyle({opacity: cStatus === 'live' ? 0.9 : 0});
+            if(i.layer.flowLayer) {
+                if(cStatus === 'live') i.layer.flowLayer.getElement()?.classList.remove('hidden-flow');
+            }
         }
         else if (i.layer.setOpacity) i.layer.setOpacity(1);
     });
@@ -1148,8 +1046,11 @@ function focusFeeder(fn) {
         i.layer.setStyle({opacity: isTarget ? 1.0 : 0.15});
         if(i.layer.flowLayer) {
             let cStatus = feederStatus[i.feederName] || 'live';
-            if (isTarget) i.layer.flowLayer.setStyle({opacity: cStatus === 'live' ? 0.9 : 0});
-            else i.layer.flowLayer.setStyle({opacity: cStatus === 'live' ? 0.15 : 0}); 
+            if (isTarget && cStatus === 'live') {
+                i.layer.flowLayer.getElement()?.classList.remove('hidden-flow');
+            } else {
+                i.layer.flowLayer.getElement()?.classList.add('hidden-flow');
+            }
         }
     } else if (i.layer.setOpacity) {
         i.layer.setOpacity(isTarget ? 1 : 0.2);
@@ -1328,31 +1229,17 @@ function dismissLoader(){
                 let fName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
                 let cStatus = feederStatus[fName] || 'live';
                 
-                // DEFERRED BASE LINE
                 let customClass = cStatus === 'breakdown' ? 'feeder-breakdown' : '';
                 const layer=L.polyline(coords,{color: color, weight: 6, opacity: 0.9, className: customClass});
                 
-                // DEFERRED OVERLAY LINE
+                let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
                 let flowLayer = L.polyline(coords, {
-                    color: '#ffffff', weight: 3, opacity: cStatus === 'live' ? 0.9 : 0, 
-                    className: 'feeder-flow-overlay'
+                    color: '#ffffff', weight: 3, className: flowClass, interactive: false
                 });
                 layer.flowLayer = flowLayer;
 
-                // BIND POPUP TO BOTH THE BASE LINE AND THE DOTS
-                layer.bindPopup(() => popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
-                flowLayer.bindPopup(() => popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
-
-                // Hover Highlight logic for both
-                flowLayer.on('mouseover', e => {
-                    layer.setStyle({weight:8,opacity:1});
-                    layer.bringToFront();
-                    flowLayer.bringToFront();
-                });
-                flowLayer.on('mouseout', e => {
-                    const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder_Name'] || p['Feeder_Name']);
-                    layer.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
-                });
+                layer.bindPopup(popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
+                layer.on('popupopen', () => layer.setPopupContent(popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'})));
 
                 layer.on('mouseover',e=>{
                     e.target.setStyle({weight:8,opacity:1});
