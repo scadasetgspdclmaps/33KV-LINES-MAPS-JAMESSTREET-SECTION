@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-<title>TGSPDCL — 33KV Dashboard & GIS</title>
+<title>TGSPDCL — 33KV James Street Section Dashboard</title>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -162,7 +162,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
   display:grid; grid-template-columns: 350px 1fr; gap:20px;
 }
 
-/* Dashboard Left: Status List & Map Links */
 .dash-section {
   background:linear-gradient(135deg,#0d1f33,#112a46); border:1px solid var(--border);
   border-radius:12px; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.3);
@@ -190,7 +189,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 }
 .btn-map-jump:hover { background:var(--live); color:#000; }
 
-/* Dashboard Right: Breakdown Form */
 .form-grid {
   display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; padding:15px;
 }
@@ -211,7 +209,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 
 
 /* ══════════════════════════════════════════════════
-   MAP VIEW (REST OF THE CSS)
+   MAP VIEW 
    ══════════════════════════════════════════════════ */
 #view-map {
   position:fixed; top:52px; left:0; right:0; bottom:0; z-index:1000;
@@ -220,6 +218,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 #view-map.hidden { opacity:0; pointer-events:none; z-index:-1; }
 
 #map{position:absolute;inset:0 0 0 0;z-index:1}
+.leaflet-tile{transition:opacity .35s ease!important}
+.leaflet-control-zoom{border:none!important;border-radius:10px!important;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.5)!important}
+.leaflet-control-zoom a{background:var(--panel)!important;color:var(--live)!important;border:none!important;width:34px!important;height:34px!important;line-height:34px!important;font-size:17px!important}
+.leaflet-control-zoom a:hover{background:rgba(0,200,255,.2)!important}
+.leaflet-control-attribution{display:none}
+.leaflet-control-scale-line{background:rgba(13,27,42,.9)!important;border-color:rgba(0,200,255,.4)!important;color:var(--live)!important;font-family:var(--mono)!important;font-size:10px!important;padding:2px 7px!important;border-radius:4px!important}
 
 /* LEFT PANEL & RESIZER */
 #panel{
@@ -252,7 +256,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 .focus-txt { transition: 0.2s; }
 .focus-txt:hover { color: #fff !important; font-weight: bold; padding-left: 3px; }
 
-/* Panel tab */
 #ptab{
   position:absolute;top:10px;left:258px;z-index:910;width:20px;height:44px;
   background:var(--panel);border:1px solid var(--border);border-left:none;
@@ -263,7 +266,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 #ptab:hover{background:rgba(0,200,255,.15)}
 #ptab.off{left:0 !important;}
 
-/* CLEAN WHITE POPUP */
+/* POPUPS */
 .leaflet-popup-content-wrapper { background: #ffffff !important; color: #333333 !important; border-radius: 8px !important; box-shadow: 0 3px 14px rgba(0,0,0,0.4) !important; padding: 0 !important; }
 .leaflet-popup-tip-container { display: none; }
 .leaflet-popup-content { margin: 14px 16px !important; min-width: 250px; }
@@ -302,7 +305,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
 .leg-l{width:20px;height:3px;border-radius:2px}
 .leg-d{width:8px;height:8px;border-radius:50%}
 
-/* Toasts & Loader */
+/* Loading & Toasts */
 #loader{ position:fixed;inset:0;z-index:9999;background:var(--navy); display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px; transition:opacity .5s var(--ease) }
 #loader.gone{opacity:0;pointer-events:none}
 .ld-logo{font-family:var(--mono);font-size:22px;color:var(--live);letter-spacing:4px}
@@ -580,8 +583,6 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy); font-fa
   </div>
 </div>
 
-<div id="toast"></div>
-
 <script>
 // ══════════════════════════════════════════════════
 // VIEW CONTROLLER
@@ -625,9 +626,34 @@ function safelyManageClass(layer, className, add) {
     }
 }
 
+function toggleRcard(id) { const card = document.getElementById(id); if(card) card.classList.toggle('collapsed'); }
+function toggleFullscreen() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => toast(`Fullscreen error: ${err.message}`));
+  else if (document.exitFullscreen) document.exitFullscreen();
+}
+
+const _bmDefs = {
+  dark:      ['https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:22,subdomains:'abcd'}],
+  satellite: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{maxZoom:22}],
+  street:    ['https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:22}],
+  hybrid:    ['https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',{maxZoom:22}],
+  google:    ['https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',{maxZoom:22}],
+};
+const BM = {};
+function getBM(name){ if(!BM[name]) BM[name]=L.tileLayer(_bmDefs[name][0],_bmDefs[name][1]); return BM[name]; }
+let curBM='dark'; getBM('dark').addTo(map);
+
+function setBM(name){
+  if(!_bmDefs[name]) return;
+  map.removeLayer(getBM(curBM)); getBM(name).addTo(map); getBM(name).bringToBack();
+  curBM=name;
+  document.querySelectorAll('.bmbtn,.bm-tab').forEach(b=>b.classList.remove('active'));
+  const el = document.getElementById('bm-'+name); if(el) el.classList.add('active');
+  toast(name.charAt(0).toUpperCase()+name.slice(1)+' basemap');
+}
 
 // ══════════════════════════════════════════════════
-// SMART FEEDER MAPPING ENGINE
+// ULTRA-FAST SMART FEEDER MAPPING ENGINE
 // ══════════════════════════════════════════════════
 const allLayers = []; 
 const feederNames = new Set();
@@ -639,6 +665,10 @@ const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:tru
 let cableFilter = 'all';
 let globalFeederFallback = true; 
 
+// FAST PRE-COMPUTED INDEXES (Prevents browser crashing on load)
+const cleanNameMap = new Map();
+const subsetNameMap = [];
+
 function cleanName(str) {
     if (!str) return '';
     let s = String(str).toUpperCase();
@@ -646,28 +676,46 @@ function cleanName(str) {
     return s.replace(/[^A-Z0-9]/g, ''); 
 }
 
+function buildFeederIndex() {
+    feederNames.forEach(fn => {
+        const c = cleanName(fn);
+        if(c) {
+            cleanNameMap.set(c, fn);
+            subsetNameMap.push({original: fn, clean: c});
+        }
+    });
+}
+
 function mapFeederName(raw) {
     if(!raw) return null;
-    let rawClean = cleanName(raw);
+    const rawClean = cleanName(raw);
     if(!rawClean || rawClean.length < 5) return null;
-    for(let std of feederNames) if(cleanName(std) === rawClean) return std;
-    for(let std of feederNames) {
-        let stdClean = cleanName(std);
-        if(stdClean.length > 4 && rawClean.length > 4 && (stdClean.includes(rawClean) || rawClean.includes(stdClean))) return std;
+
+    if(cleanNameMap.has(rawClean)) return cleanNameMap.get(rawClean);
+
+    for(let i=0; i<subsetNameMap.length; i++) {
+        const std = subsetNameMap[i].clean;
+        if(std.length > 4 && (std.includes(rawClean) || rawClean.includes(std))) {
+            return subsetNameMap[i].original;
+        }
     }
     return null;
 }
 
 function extractFeeder(props, fallback) {
     if (!props) return fallback;
-    const keys = ['Feeder Name', 'Feeder_Name', 'Name of the Feeder', 'feeder', 'FEEDER', 'Name', 'NAME', 'Text', 'Layer'];
+    const keys = ['Feeder Name', 'Feeder_Name', 'Name of the Feeder', 'feeder', 'FEEDER'];
     for(let k of keys) {
         if(props[k]) { let mapped = mapFeederName(props[k]); if(mapped) return mapped; }
     }
     return fallback;
 }
 
-// Pass 1: Build Master Feeder List
+// ══════════════════════════════════════════════════
+// DATA INITIALIZATION
+// ══════════════════════════════════════════════════
+
+// Pass 1: Extract master names
 DATA_REGISTRY.forEach(reg => {
   try {
     const data = window[reg.varName];
@@ -676,13 +724,16 @@ DATA_REGISTRY.forEach(reg => {
       const props = feat.properties || {};
       const fName = props['Feeder Name'] || reg.feeder;
       if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht') && !reg.type.startsWith('fseg') && fName !== 'Feeder Segments') {
-          feederNames.add(fName.trim());
+          feederNames.add(String(fName).trim());
       }
     });
   } catch(e){}
 });
 
-// Pass 2: Render
+// BUILD THE INDEX BEFORE RENDERING
+buildFeederIndex();
+
+// Pass 2: Map and Render everything
 DATA_REGISTRY.forEach(reg => {
   try {
   const data = window[reg.varName];
@@ -850,10 +901,11 @@ function popup(feat, regEntry){
   let statusBar = '';
   if(fn && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
     const cur = feederStatus[fn] || 'live';
+    const fnEsc = String(fn).replace(/'/g,"\\'");
     statusBar = `<div class="fs-status-bar">
-      <div class="fs-status-btn${cur==='live'?' active-live':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','live',this)">⚡ LIVE</div>
-      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
-      <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
+      <div class="fs-status-btn${cur==='live'?' active-live':''}" onclick="setFeederStatus('${fnEsc}','live',this)">⚡ LIVE</div>
+      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fnEsc}','breakdown',this)">🔴 DOWN</div>
+      <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fnEsc}','idle',this)">⏸ IDLE</div>
     </div>`;
   }
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
@@ -878,7 +930,6 @@ if(allCoords.length > 0){ try{ map.fitBounds(L.latLngBounds(allCoords),{padding:
 
 let focusedFeeder = null;
 
-// ── DASHBOARD SYNC ENGINE ──
 function updateDashboardStats() {
     let l=0, d=0, id=0;
     const container = document.getElementById('dash-feeder-list');
@@ -892,6 +943,7 @@ function updateDashboardStats() {
         
         let color = status==='live' ? 'var(--ok)' : (status==='breakdown' ? 'var(--fault)' : '#9e9e9e');
         let icon = status==='live' ? '⚡ LIVE' : (status==='breakdown' ? '🔴 DOWN' : '⏸ IDLE');
+        let fnEsc = String(fn).replace(/'/g,"\\'");
         
         container.innerHTML += `
         <div class="fd-item">
@@ -900,7 +952,7 @@ function updateDashboardStats() {
                 <span style="font-family:var(--mono); font-size:10px; color:${color}">${icon}</span>
             </div>
             <div class="fd-actions">
-                <button class="btn-map-jump" onclick="switchView('map'); setTimeout(()=>focusFeeder('${fn.replace(/'/g,"\\'")}'), 300)">MAP ⛶</button>
+                <button class="btn-map-jump" onclick="switchView('map'); setTimeout(()=>focusFeeder('${fnEsc}'), 300)">MAP ⛶</button>
             </div>
         </div>`;
     });
@@ -944,14 +996,14 @@ function setFeederStatus(fn, status, btnEl) {
     }
   });
 
-  document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
+  document.querySelectorAll(`.fi-btn[data-feeder="${String(fn).replace(/'/g,"\\'")}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
   });
   updateFeederBadges();
   updateDashboardStats();
   const statusLabel = status === 'live' ? 'LIVE' : status === 'breakdown' ? 'BREAKDOWN' : 'IDLE';
-  toast(`${fn.split('→')[1]?.trim() || fn}: ${statusLabel}`);
+  toast(`${String(fn).split('→')[1]?.trim() || fn}: ${statusLabel}`);
 }
 
 function updateFeederBadges() {
@@ -1002,7 +1054,7 @@ function focusFeeder(fn) {
   });
   
   if(coords.length > 0) map.flyToBounds(L.latLngBounds(coords), {padding:[50,50], animate:true, duration: 1.0});
-  toast(`Focused on: ${fn.split('→')[1]?.trim() || fn}`);
+  toast(`Focused on: ${String(fn).split('→')[1]?.trim() || fn}`);
 }
 
 function toggleSingleFeeder(fn, idx, e) {
@@ -1010,7 +1062,7 @@ function toggleSingleFeeder(fn, idx, e) {
   feederState[fn] = !feederState[fn];
   document.getElementById('ftog-'+idx).classList.toggle('off', !feederState[fn]);
   updateVisibility();
-  toast((feederState[fn] ? 'Showing ' : 'Hidden ') + fn.substring(0,15));
+  toast((feederState[fn] ? 'Showing ' : 'Hidden ') + String(fn).substring(0,15));
 }
 
 function buildFeederChecks(){
@@ -1022,12 +1074,13 @@ function buildFeederChecks(){
   [...feederNames].sort().forEach((fn,i)=>{
     feederState[fn] = true; 
     const color = FCOLORS[i % FCOLORS.length];
-    const short = fn.replace('→','→').substring(0,25); 
+    const fnStr = String(fn);
+    const short = fnStr.replace('→','→').substring(0,25); 
     
     const row = document.createElement('div');
     row.className = 'ftog-row';
     row.style.cssText = 'flex-wrap:wrap;gap:3px;padding:5px 6px;';
-    const fnEsc = fn.replace(/'/g, "\\'");
+    const fnEsc = fnStr.replace(/'/g, "\\'");
     row.innerHTML=`
       <div style="display:flex;align-items:center;gap:6px;width:100%">
         <div style="width:10px;height:10px;border-radius:2px;background:${color};flex-shrink:0;border:1px solid rgba(255,255,255,.2)"></div>
