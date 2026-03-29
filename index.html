@@ -371,7 +371,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   stroke-dasharray: 4 20 !important;
   stroke-linecap: round !important;
   animation: energy-flow-overlay 0.8s linear infinite !important;
-  pointer-events: none !important; 
+  pointer-events: none !important;
+}
+/* Force pointer-events:none on the actual SVG path Leaflet creates */
+.feeder-flow-overlay path,
+.leaflet-overlay-pane path.feeder-flow-overlay {
+  pointer-events: none !important;
+  cursor: default !important;
 }
 
 /* ── 2. BREAKDOWN (SOS URGENT BLINK) ── */
@@ -772,6 +778,10 @@ function popup(feat, regEntry){
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
   }
+  // Fallback if no rows built
+  if(!rows && !headerId) {
+    rows = '<tr><td colspan="2" style="color:#999;font-style:italic;padding:4px">No attributes available</td></tr>';
+  }
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
 
@@ -816,10 +826,11 @@ DATA_REGISTRY.forEach(reg => {
           {color: color, weight: 6, opacity: 0.9, smoothFactor:1.5, className: customClass});
           
         // 2. OVERLAY LAYER (White Dots)
-        // CRITICAL FIX: interactive is false, pointer-events: none is enforced in CSS
+        // FIX: interactive:false + bubblingMouseEvents:false ensures clicks pass through to base layer
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         let flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
-            color: '#ffffff', weight: 3, className: flowClass, interactive: false 
+            color: '#ffffff', weight: 3, className: flowClass,
+            interactive: false, bubblingMouseEvents: false
         });
         
         layer.flowLayer = flowLayer;
@@ -867,11 +878,16 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(popup(feat, reg));
+        layer.bindPopup(popup(feat, reg), {maxWidth: 320, minWidth: 260});
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
+                // Bind pole number as permanent tooltip on non-SS markers
                 poleNoStr = String(poleNo).trim();
+                layer.bindTooltip(poleNoStr, {
+                    permanent: true, direction: 'right',
+                    className: 'pole-label', offset: [6, 0]
+                });
             } else {
                 const ssName = String(poleNo).replace('33/11KV ','').replace('33/11KV','').replace('132 KV ','').replace('132KV ','').trim();
                 layer.bindTooltip(ssName, {permanent:true, direction:'top', offset:[0,-16], className:'ss-label'});
