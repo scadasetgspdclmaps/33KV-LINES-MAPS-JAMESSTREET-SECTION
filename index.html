@@ -373,9 +373,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   animation: energy-flow-overlay 0.8s linear infinite !important;
   pointer-events: none !important;
 }
-/* Force pointer-events:none on the actual SVG path Leaflet creates */
-.feeder-flow-overlay path,
-.leaflet-overlay-pane path.feeder-flow-overlay {
+/* Leaflet puts className directly on the SVG <path> element */
+path.feeder-flow-overlay {
   pointer-events: none !important;
   cursor: default !important;
 }
@@ -569,6 +568,12 @@ const map = L.map('map',{
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
+
+// Create a dedicated non-interactive pane for flow dot overlays
+// Setting pointer-events:none on the pane container is the definitive fix
+map.createPane('flowPane');
+map.getPane('flowPane').style.pointerEvents = 'none';
+map.getPane('flowPane').style.zIndex = 399; // below overlayPane (400) so clicks go to overlayPane
 
 function toggleRcard(id) {
   const card = document.getElementById(id);
@@ -830,16 +835,20 @@ DATA_REGISTRY.forEach(reg => {
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         let flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
             color: '#ffffff', weight: 3, className: flowClass,
-            interactive: false, bubblingMouseEvents: false
+            interactive: false, bubblingMouseEvents: false,
+            pane: 'flowPane'
         });
         
         layer.flowLayer = flowLayer;
 
         // BIND POPUP STRICTLY TO THE BASE LAYER
-        layer.bindPopup(popup(feat, reg));
-        
-        // Ensure popup content refreshes correctly 
+        layer.bindPopup(popup(feat, reg), {maxWidth: 340, minWidth: 260});
         layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, reg)); });
+        // Belt-and-suspenders: explicit click handler in case Leaflet default is swallowed
+        layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            layer.openPopup(e.latlng);
+        });
 
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
@@ -878,7 +887,11 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(popup(feat, reg), {maxWidth: 320, minWidth: 260});
+        layer.bindPopup(popup(feat, reg), {maxWidth: 340, minWidth: 260});
+        layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            layer.openPopup(e.latlng || e.target.getLatLng());
+        });
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
