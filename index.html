@@ -403,7 +403,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .fi-breakdown.fi-active { background:rgba(255,23,68,.25);color:#ff1744;border-color:#ff1744; animation:sos-blink 0.8s infinite; }
 .fi-idle.fi-active      { background:rgba(158,158,158,.25);color:#aaa;border-color:#aaa; }
 
-/* Custom Map Labels - ensure they never block clicks */
+/* Custom Map Labels */
 .ss-label{ background:rgba(9,22,37,.88)!important; border:1px solid rgba(0,200,255,.35)!important; border-radius:4px!important; color:#00c8ff!important; font-family:'Share Tech Mono',monospace!important; font-weight:normal; font-size:9px!important; letter-spacing:.3px!important; padding:2px 5px!important; white-space:nowrap!important; box-shadow:0 2px 6px rgba(0,0,0,.4)!important; opacity:0.9!important; max-width:120px!important; overflow:hidden!important; text-overflow:ellipsis!important; pointer-events: none !important;}
 .ss-label.leaflet-tooltip-top::before{border-top-color:rgba(0,200,255,.35)!important}
 </style>
@@ -424,9 +424,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
     <input id="srchInput" placeholder="Search pole no., feeder, cable point…" autocomplete="off"/>
     <span class="srch-ic">⌕</span>
   </div>
-  
   <div class="fs-btn" onclick="toggleFullscreen()" title="Fullscreen Mode">⛶</div>
-  
   <div class="chip chip-live" id="chipStatus">● LIVE</div>
 </div>
 
@@ -522,13 +520,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 </div>
 
 <script>
-// IMPORTANT: preferCanvas MUST be false to allow CSS animations on map lines!
+// ══════════════════════════════════════════════════
+// MAP CORE & Z-INDEX PANES
+// ══════════════════════════════════════════════════
 const map = L.map('map',{
   center:[17.4437,78.4785], zoom:16, zoomControl:false, preferCanvas:false,
   zoomAnimation:true, fadeAnimation:true, markerZoomAnimation:true
 });
 
-// ── CRITICAL FIX: Custom Z-index pane forces all poles/points above lines! ──
+// CRITICAL FIX: Custom Z-index pane guarantees poles/points float physically above lines
 map.createPane('pointsPane');
 map.getPane('pointsPane').style.zIndex = 650; 
 
@@ -536,17 +536,20 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
-function toggleRcard(id) {
-  const card = document.getElementById(id);
-  if(card) card.classList.toggle('collapsed');
+function safelyManageClass(layer, className, add) {
+    if(!layer) return;
+    const el = layer.getElement ? layer.getElement() : layer._path;
+    if(el) {
+        if(add) el.classList.add(className);
+        else el.classList.remove(className);
+    }
 }
 
+function toggleRcard(id) { const card = document.getElementById(id); if(card) card.classList.toggle('collapsed'); }
+
 function toggleFullscreen() {
-  if (!document.fullscreenElement) {
-    document.documentElement.requestFullscreen().catch(err => toast(`Fullscreen error: ${err.message}`));
-  } else {
-    if (document.exitFullscreen) document.exitFullscreen();
-  }
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(err => toast(`Fullscreen error: ${err.message}`));
+  else if (document.exitFullscreen) document.exitFullscreen();
 }
 
 const _bmDefs = {
@@ -565,100 +568,12 @@ function setBM(name){
   map.removeLayer(getBM(curBM)); getBM(name).addTo(map); getBM(name).bringToBack();
   curBM=name;
   document.querySelectorAll('.bmbtn,.bm-tab').forEach(b=>b.classList.remove('active'));
-  const el = document.getElementById('bm-'+name);
-  if(el) el.classList.add('active');
+  const el = document.getElementById('bm-'+name); if(el) el.classList.add('active');
   toast(name.charAt(0).toUpperCase()+name.slice(1)+' basemap');
 }
 
-const DATA_REGISTRY = [
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_1', type:'points', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_AB_Switch_2', type:'ab', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Double_Pole_Structure_3',type:'dp', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Cut_Points_4', type:'cut', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Feeder_Lines_5', type:'lines', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_6', type:'points', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_AB_Switch_7', type:'ab', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Double_Pole_Structure_8',type:'dp', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Cut_Points_9', type:'cut', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Feeder_Lines_10', type:'lines', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVKIMSJamesstreet_11', type:'points', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_AB_Switch_12', type:'ab', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Double_Pole_Structure_13',type:'dp', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Cut_Points_14', type:'cut', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Feeder_Lines_15', type:'lines', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVClocktowerNehrunagar_16', type:'points', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_AB_Switch_17', type:'ab', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Double_Pole_Structure_18',type:'dp', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Cut_Points_19', type:'cut', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Feeder_Lines_20', type:'lines', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_21', type:'points', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_AB_Switch_22', type:'ab', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Double_Pole_Structure_23',type:'dp', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Cut_Points_24', type:'cut', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Feeder_Lines_25', type:'lines', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_26', type:'points', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_AB_Switch_27', type:'ab', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Double_Pole_Structure_28',type:'dp', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Cut_Points_29', type:'cut', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Feeder_Lines_30', type:'lines', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_31', type:'points', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_AB_Switch_32', type:'ab', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Double_Pole_Structure_33',type:'dp', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Cut_Points_34', type:'cut', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Feeder_Lines_35', type:'lines', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_36', type:'points', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_AB_Switch_37', type:'ab', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Double_Pole_Structure_38',type:'dp', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Cut_Points_39', type:'cut', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Feeder_Lines_40', type:'lines', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_41', type:'points', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_AB_Switch_42', type:'ab', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Double_Pole_Structure_43',type:'dp', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Cut_Points_44', type:'cut', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Feeder_Lines_45', type:'lines', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_46', type:'points', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_AB_Switch_47', type:'ab', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Double_Pole_Structure_48',type:'dp', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Cut_Points_49', type:'cut', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Feeder_Lines_50', type:'lines', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_51', type:'points', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_AB_Switch_52', type:'ab', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Double_Pole_Structure_53',type:'dp', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Cut_Points_54', type:'cut', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Feeder_Lines_55', type:'lines', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_56', type:'points', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_AB_Switch_57', type:'ab', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Double_Pole_Structure_58',type:'dp', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Cut_Points_59', type:'cut', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Feeder_Lines_60', type:'lines', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_61', type:'points', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_AB_Switch_62', type:'ab', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Double_Pole_Structure_63',type:'dp', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Cut_Points_64', type:'cut', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Feeder_Lines_65', type:'lines', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_66', type:'points', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_AB_Switch_67', type:'ab', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Double_Pole_Structure_68',type:'dp', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Cut_Points_69', type:'cut', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Feeder_Lines_70', type:'lines', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_71', type:'points', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_AB_Switch_72', type:'ab', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Double_Pole_Structure_73',type:'dp', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Cut_Points_74', type:'cut', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Feeder_Lines_75', type:'lines', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_3311KVSSCOORDINATESWITHDATA20_76', type:'ss33', feeder:'33/11KV SS', cable:'-' },
-  { varName:'json_SS_WEB_INTERACT_77', type:'ss33i', feeder:'33/11KV SS (Interactive)', cable:'-' },
-  { varName:'json_FeederPoles_78', type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
-  { varName:'json_Feeder_Segments_WEB_INTERACT_79', type:'fsegi', feeder:'Feeder Segments', cable:'-' },
-  { varName:'json_Feeder_Segments_WEB_DISPLAY_80', type:'fsegd', feeder:'Feeder Segments Display', cable:'-' },
-  // json_Feeder_Segments_81 loaded deferred
-  { varName:'json_EHTSSCOORDINATESWITHDATA_82', type:'ehts', feeder:'EHT SS', cable:'-' },
-  { varName:'json_SS_WEB_INTERACT_83', type:'ehtsi', feeder:'EHT SS (Interactive)', cable:'-' },
-];
-
-
 // ══════════════════════════════════════════════════
-//  STRING MATCHING ENGINE (FUSES BASE + SEGMENTS)
+// SMART FEEDER MAPPING ENGINE
 // ══════════════════════════════════════════════════
 const allLayers = []; 
 const feederNames = new Set();
@@ -668,37 +583,59 @@ const feederLayerMap = {};
 
 const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:true, cut:true, ss33:true, ehts:true, fsegs:true };
 let cableFilter = 'all';
-let globalFeederFallback = true; // Fallback for the "NONE" button
+let globalFeederFallback = true; 
 
-// This function guarantees segments match the master names flawlessly!
+// Clean a raw string to strip out 33KV, SS, dashes, etc so segments match master names perfectly
 function cleanName(str) {
     if (!str) return '';
     let s = String(str).toUpperCase();
-    // Strip everything that isn't a pure location name (removes KV, SS, UG, etc)
-    s = s.replace(/132KV|33\/11KV|33KV|11KV|SS|FEEDER|LINE|UNDERGROUND|OVERHEAD|UG|OH/g, ' ');
-    return s.replace(/[^A-Z0-9]/g, ''); // Keep numbers just in case!
+    s = s.replace(/132\s*KV|33\s*\/\s*11\s*KV|33\s*KV|11\s*KV|SS|FEEDER|LINE|UNDERGROUND|OVERHEAD|UG|OH/g, ' ');
+    return s.replace(/[^A-Z0-9]/g, ''); 
 }
 
 function mapFeederName(raw) {
-    if(!raw) return 'Feeder Segments';
+    if(!raw) return null;
     let rawClean = cleanName(raw);
-    if(!rawClean) return raw;
+    if(!rawClean || rawClean.length < 5) return null;
 
-    // 1. Exact clean match
+    // Direct Match
     for(let std of feederNames) {
         if(cleanName(std) === rawClean) return std;
     }
-    // 2. Subset match (one is contained within the other)
+    // Subset Match
     for(let std of feederNames) {
         let stdClean = cleanName(std);
         if(stdClean.length > 4 && rawClean.length > 4) {
             if (stdClean.includes(rawClean) || rawClean.includes(stdClean)) return std;
         }
     }
-    return raw;
+    return null;
 }
 
-// Populate the Master Names immediately from the Base Layers
+// Aggressive attribute checking to bind any orphaned segment to its parent feeder
+function extractFeeder(props, fallback) {
+    if (!props) return fallback;
+    const keys = ['Feeder Name', 'Feeder_Name', 'Name of the Feeder', 'feeder', 'FEEDER', 'Name', 'NAME', 'Text', 'Layer'];
+    for(let k of keys) {
+        if(props[k]) {
+            let mapped = mapFeederName(props[k]);
+            if(mapped) return mapped;
+        }
+    }
+    for(let key in props) {
+        if(typeof props[key] === 'string') {
+            let mapped = mapFeederName(props[key]);
+            if(mapped) return mapped;
+        }
+    }
+    return fallback;
+}
+
+// ══════════════════════════════════════════════════
+// DATA PROCESSING
+// ══════════════════════════════════════════════════
+
+// Pass 1: Build the authoritative Master Feeder List purely from base lines
 DATA_REGISTRY.forEach(reg => {
   try {
     const data = window[reg.varName];
@@ -706,111 +643,14 @@ DATA_REGISTRY.forEach(reg => {
     data.features.forEach(feat => {
       const props = feat.properties || {};
       const fName = props['Feeder Name'] || reg.feeder;
-      if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
-          feederNames.add(fName);
+      if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht') && !reg.type.startsWith('fseg') && fName !== 'Feeder Segments') {
+          feederNames.add(fName.trim());
       }
     });
   } catch(e){}
 });
 
-
-// ══════════════════════════════════════════════════
-//  VISIBILITY MANAGEMENT 
-// ══════════════════════════════════════════════════
-function updateVisibility() {
-  let visibleCount = 0;
-  allLayers.forEach(item => {
-    let t = item.reg.type;
-    if (t === 'lines') t = item.cable === 'UG' ? 'ug-lines' : 'oh-lines';
-    if (t.startsWith('ss33')) t = 'ss33';
-    if (t.startsWith('eht')) t = 'ehts';
-    if (t.startsWith('fseg')) t = 'fsegs';
-    if (t === 'fpoles') t = 'points';
-
-    const typeIsOn = LGstate[t] !== false;
-    const isSubstation = (t === 'ss33' || t === 'ehts');
-    
-    // Absolute guarantee: if it's not mapped, fallback to "Hide All" state!
-    const fState = feederState[item.feederName];
-    let feederIsOn = (fState !== undefined) ? (fState !== false) : globalFeederFallback;
-    if (isSubstation) feederIsOn = true;
-
-    let cableIsOn = true;
-    if(!isSubstation) {
-      if(cableFilter === 'ug' && item.cable !== 'UG' && item.cable !== '-') cableIsOn = false;
-      if(cableFilter === 'oh' && item.cable !== 'OH' && item.cable !== '-') cableIsOn = false;
-    }
-
-    const shouldShow = typeIsOn && feederIsOn && cableIsOn;
-
-    if (shouldShow) {
-      if (!map.hasLayer(item.layer)) map.addLayer(item.layer);
-      
-      // Show overlay if it should be visible
-      if (item.layer.flowLayer && !map.hasLayer(item.layer.flowLayer)) {
-          map.addLayer(item.layer.flowLayer);
-      }
-      visibleCount++;
-    } else {
-      // HIDE EVERYTHING IMMEDIATELY
-      if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
-      if (item.layer.flowLayer && map.hasLayer(item.layer.flowLayer)) {
-          map.removeLayer(item.layer.flowLayer);
-      }
-    }
-  });
-  document.getElementById('st-visible').textContent = visibleCount;
-  syncLabels();
-}
-
-function popup(feat, regEntry){
-  const p = feat.properties || {};
-  let rows = '';
-  const hideKeys = ['id', 'layer', 'path', 'fid'];
-
-  if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
-      hideKeys.push('popup');
-  }
-
-  let headerId = '';
-  if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) {
-    headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID'] || p['Pole Number']}</div>`;
-  }
-
-  Object.keys(p).forEach(k => {
-    if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
-        let val = p[k];
-        if (k.toLowerCase() === 'popup') {
-            rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Notes:</strong><br>${val}</td></tr>`;
-            return; 
-        }
-        if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) val = parseFloat(val).toFixed(3);
-        if(k.toLowerCase().includes('length') || k.toLowerCase().includes('transitions')) val += ' km';
-        if(k.toLowerCase().includes('total no.')) val += ' Nos';
-        rows += `<tr><th>${k}</th><td>${val}</td></tr>`;
-    }
-  });
-
-  const rawFn = p['Feeder Name'] || (regEntry && regEntry.feeder) || '';
-  const fn = mapFeederName(rawFn); // Map so buttons highlight correctly
-  
-  let statusBar = '';
-  if(fn && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
-    const cur = feederStatus[fn] || 'live';
-    statusBar = `<div class="fs-status-bar">
-      <div class="fs-status-btn${cur==='live'?' active-live':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','live',this)">⚡ LIVE</div>
-      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
-      <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
-    </div>`;
-  }
-  return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
-}
-
-function mkIcon(color, border, shape='square', char=''){
-  const s = `width:12px;height:12px;border-radius:0px;border:2px solid ${border};background:${color};box-shadow:0 0 6px rgba(0,0,0,0.3)`;
-  return L.divIcon({className:'', html:`<div style="${s};cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:7px;color:${border}">${char}</div>`, iconSize:[12,12],iconAnchor:[6,6]});
-}
-
+// Pass 2: Physically render and smartly bind all elements
 DATA_REGISTRY.forEach(reg => {
   try {
   const data = window[reg.varName];
@@ -825,7 +665,7 @@ DATA_REGISTRY.forEach(reg => {
     cableType = isOH ? 'OH' : 'UG';
 
     const rawFeederName = props['Feeder Name'] || reg.feeder;
-    const feederName = mapFeederName(rawFeederName); // Clean mapping applies here
+    const feederName = extractFeeder(props, rawFeederName); // Smart Bind
 
     let layer;
     let poleNoStr = null;
@@ -848,11 +688,8 @@ DATA_REGISTRY.forEach(reg => {
             color: '#ffffff', weight: 3, className: flowClass, interactive: false 
         });
 
-        // Click bound securely to the line
-        layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            L.popup({className: 'custom-popup-style'}).setLatLng(e.latlng).setContent(popup(feat, reg)).openOn(map);
-        });
+        layer.bindPopup(popup(feat, reg));
+        layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, reg)); });
 
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
@@ -886,13 +723,7 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            const latlng = e.latlng || (typeof layer.getLatLng === 'function' ? layer.getLatLng() : null);
-            if(latlng) {
-                L.popup({className: 'custom-popup-style'}).setLatLng(latlng).setContent(popup(feat, reg)).openOn(map);
-            }
-        });
+        layer.bindPopup(popup(feat, reg));
         
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
@@ -916,6 +747,84 @@ DATA_REGISTRY.forEach(reg => {
   } catch(e){}
 });
 
+function updateVisibility() {
+  let visibleCount = 0;
+  allLayers.forEach(item => {
+    let t = item.reg.type;
+    if (t === 'lines') t = item.cable === 'UG' ? 'ug-lines' : 'oh-lines';
+    if (t.startsWith('ss33')) t = 'ss33';
+    if (t.startsWith('eht')) t = 'ehts';
+    if (t.startsWith('fseg')) t = 'fsegs';
+    if (t === 'fpoles') t = 'points';
+
+    const typeIsOn = LGstate[t] !== false;
+    const isSubstation = (t === 'ss33' || t === 'ehts');
+    
+    // Check perfectly bound name
+    const fState = feederState[item.feederName];
+    let feederIsOn = (fState !== undefined) ? (fState !== false) : globalFeederFallback;
+    if (isSubstation) feederIsOn = true;
+
+    let cableIsOn = true;
+    if(!isSubstation) {
+      if(cableFilter === 'ug' && item.cable !== 'UG' && item.cable !== '-') cableIsOn = false;
+      if(cableFilter === 'oh' && item.cable !== 'OH' && item.cable !== '-') cableIsOn = false;
+    }
+
+    const shouldShow = typeIsOn && feederIsOn && cableIsOn;
+
+    if (shouldShow) {
+      if (!map.hasLayer(item.layer)) map.addLayer(item.layer);
+      if (item.layer.flowLayer && !map.hasLayer(item.layer.flowLayer)) map.addLayer(item.layer.flowLayer);
+      visibleCount++;
+    } else {
+      if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
+      if (item.layer.flowLayer && map.hasLayer(item.layer.flowLayer)) map.removeLayer(item.layer.flowLayer);
+    }
+  });
+  document.getElementById('st-visible').textContent = visibleCount;
+  syncLabels();
+}
+
+function popup(feat, regEntry){
+  const p = feat.properties || {};
+  let rows = '';
+  const hideKeys = ['id', 'layer', 'path', 'fid'];
+
+  if (regEntry && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) hideKeys.push('popup');
+
+  let headerId = '';
+  if (p['id'] || p['fid'] || p['ID'] || p['Pole Number']) headerId = `<div class="pc-header-id">${p['id'] || p['fid'] || p['ID'] || p['Pole Number']}</div>`;
+
+  Object.keys(p).forEach(k => {
+    if(p[k] !== null && p[k] !== '' && !hideKeys.includes(k.toLowerCase())) {
+        let val = p[k];
+        if (k.toLowerCase() === 'popup') {
+            rows += `<tr><td colspan="2" style="white-space:pre-wrap; padding-top:8px; padding-bottom:8px; border-top: 1px solid #eee;"><strong>Notes:</strong><br>${val}</td></tr>`;
+            return; 
+        }
+        if(!isNaN(val) && val.toString().indexOf('.') !== -1 && !isNaN(parseFloat(val))) val = parseFloat(val).toFixed(3);
+        if(k.toLowerCase().includes('length') || k.toLowerCase().includes('transitions')) val += ' km';
+        if(k.toLowerCase().includes('total no.')) val += ' Nos';
+        rows += `<tr><th>${k}</th><td>${val}</td></tr>`;
+    }
+  });
+
+  const rawFn = p['Feeder Name'] || (regEntry && regEntry.feeder) || '';
+  const fn = extractFeeder(p, rawFn); 
+  
+  let statusBar = '';
+  if(fn && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
+    const cur = feederStatus[fn] || 'live';
+    statusBar = `<div class="fs-status-bar">
+      <div class="fs-status-btn${cur==='live'?' active-live':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','live',this)">⚡ LIVE</div>
+      <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
+      <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
+    </div>`;
+  }
+  return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
+}
+
 function updateCounts() {
   document.getElementById('st-total').textContent = allLayers.length;
   document.getElementById('cnt-ug-lines').textContent = allLayers.filter(i => (i.reg.type === 'lines' && i.cable === 'UG')).length;
@@ -935,6 +844,7 @@ if(allCoords.length > 0){ try{ map.fitBounds(L.latLngBounds(allCoords),{padding:
 
 let focusedFeeder = null;
 
+// ── CORE LOGIC: THE 3 VISUAL STATES ──
 function setFeederStatus(fn, status, btnEl) {
   feederStatus[fn] = status;
 
@@ -954,39 +864,30 @@ function setFeederStatus(fn, status, btnEl) {
     
     const baseColor = item.cable === 'OH' ? '#f44336' : '#2196f3';
     
-    // 1. LIVE: Solid Line + Dots Flowing
     if(status === 'live') {
       item.layer.setStyle({color: baseColor, weight:6, opacity:0.9});
-      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.remove('feeder-breakdown');
-      
+      safelyManageClass(item.layer, 'feeder-breakdown', false);
       if(item.layer.flowLayer) {
           item.layer.flowLayer.options.className = 'feeder-flow-overlay';
-          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.remove('hidden-flow');
+          safelyManageClass(item.layer.flowLayer, 'hidden-flow', false);
       }
-      
-    // 2. BREAKDOWN: Red SOS Blink + ZERO Flowing Dots
     } else if(status === 'breakdown') {
       item.layer.setStyle({color:'#ff1744', weight:7, opacity:1});
-      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.add('feeder-breakdown');
-      
+      safelyManageClass(item.layer, 'feeder-breakdown', true);
       if(item.layer.flowLayer) {
           item.layer.flowLayer.options.className = 'feeder-flow-overlay hidden-flow';
-          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.add('hidden-flow'); 
+          safelyManageClass(item.layer.flowLayer, 'hidden-flow', true);
       }
-      
-    // 3. IDLE: Static Grey Line + ZERO Flowing Dots
     } else if(status === 'idle') {
       item.layer.setStyle({color:'#9e9e9e', weight:5, opacity:0.6});
-      if(item.layer.getElement && item.layer.getElement()) item.layer.getElement().classList.remove('feeder-breakdown');
-      
+      safelyManageClass(item.layer, 'feeder-breakdown', false);
       if(item.layer.flowLayer) {
           item.layer.flowLayer.options.className = 'feeder-flow-overlay hidden-flow';
-          if(item.layer.flowLayer.getElement()) item.layer.flowLayer.getElement().classList.add('hidden-flow'); 
+          safelyManageClass(item.layer.flowLayer, 'hidden-flow', true);
       }
     }
   });
 
-  // Re-sync all popups inside the map if they are currently open
   document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
@@ -1013,9 +914,7 @@ function focusFeeder(fn) {
         if(i.layer.setStyle && (i.reg.type === 'lines' || i.reg.type === 'fsegs')) {
             i.layer.setStyle({opacity: 0.9});
             let cStatus = feederStatus[i.feederName] || 'live';
-            if(i.layer.flowLayer) {
-                if(cStatus === 'live') i.layer.flowLayer.getElement()?.classList.remove('hidden-flow');
-            }
+            if(i.layer.flowLayer && cStatus === 'live') safelyManageClass(i.layer.flowLayer, 'hidden-flow', false);
         }
         else if (i.layer.setOpacity) i.layer.setOpacity(1);
     });
@@ -1032,11 +931,8 @@ function focusFeeder(fn) {
         i.layer.setStyle({opacity: isTarget ? 1.0 : 0.15});
         if(i.layer.flowLayer) {
             let cStatus = feederStatus[i.feederName] || 'live';
-            if (isTarget && cStatus === 'live') {
-                i.layer.flowLayer.getElement()?.classList.remove('hidden-flow');
-            } else {
-                i.layer.flowLayer.getElement()?.classList.add('hidden-flow');
-            }
+            if (isTarget && cStatus === 'live') safelyManageClass(i.layer.flowLayer, 'hidden-flow', false);
+            else safelyManageClass(i.layer.flowLayer, 'hidden-flow', true);
         }
     } else if (i.layer.setOpacity) {
         i.layer.setOpacity(isTarget ? 1 : 0.2);
@@ -1091,7 +987,7 @@ function buildFeederChecks(){
 }
 
 function toggleAllFeeders(show){
-  globalFeederFallback = show; // Sets the global kill switch
+  globalFeederFallback = show; 
   [...feederNames].forEach((fn,i)=>{
     feederState[fn] = show;
     const tog = document.getElementById('ftog-'+i);
@@ -1164,14 +1060,7 @@ document.getElementById('srchInput').addEventListener('input', function(e){
   if (found && found.layer.getLatLng) {
     const ll = found.layer.getLatLng();
     map.flyTo(ll, 19, {animate:true});
-    
-    // Check if it's a marker vs line to open popup properly
-    if (found.layer.getPopup && found.layer.getPopup()) {
-        found.layer.openPopup();
-    } else {
-        L.popup({className: 'custom-popup-style'})
-            .setLatLng(ll).setContent(popup(found.layer.feature, found.reg)).openOn(map);
-    }
+    if (found.layer.getPopup && found.layer.getPopup()) found.layer.openPopup();
     
     const pingIcon = L.divIcon({className: 'radar-ping', iconSize: [0,0]});
     const pingMarker = L.marker(ll, {icon: pingIcon, zIndexOffset: 2000}).addTo(map);
@@ -1196,7 +1085,7 @@ function dismissLoader(){
   if(ov){ ov.classList.add('gone'); setTimeout(()=>ov.remove(),500); }
   map.invalidateSize();
   
-  // ── DEFERRED SCRIPT ──
+  // ── DEFERRED SCRIPT (Mapped smartly) ──
   setTimeout(()=>{
     const s=document.createElement('script');
     s.src='data/Feeder_Segments_81.js';
@@ -1221,7 +1110,7 @@ function dismissLoader(){
                 
                 // Mapped Feeder Name guarantees the segment hides/highlights correctly!
                 let rawFName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
-                let fName = mapFeederName(rawFName);
+                let fName = extractFeeder(p, rawFName);
                 
                 let cStatus = feederStatus[fName] || 'live';
                 let customClass = cStatus === 'breakdown' ? 'feeder-breakdown' : '';
@@ -1234,11 +1123,9 @@ function dismissLoader(){
                 });
 
                 const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
-                layer.on('click', function(e) {
-                    L.DomEvent.stopPropagation(e);
-                    L.popup({className: 'custom-popup-style'})
-                     .setLatLng(e.latlng).setContent(popup(feat, regData)).openOn(map);
-                });
+                
+                layer.bindPopup(popup(feat, regData));
+                layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, regData)); });
 
                 layer.on('mouseover',e=>{
                     e.target.setStyle({weight:8,opacity:1});
