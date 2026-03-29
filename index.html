@@ -536,12 +536,6 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
-// Dedicated pane for flow dot overlays — pointer-events:none at container level
-// This is the definitive fix so flow dots NEVER intercept clicks
-map.createPane('flowPane');
-map.getPane('flowPane').style.pointerEvents = 'none';
-map.getPane('flowPane').style.zIndex = 399;
-
 function safelyManageClass(layer, className, add) {
     if(!layer) return;
     const el = layer.getElement ? layer.getElement() : layer._path;
@@ -637,91 +631,6 @@ function extractFeeder(props, fallback) {
     return fallback;
 }
 
-const DATA_REGISTRY = [
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_1', type:'points', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_AB_Switch_2', type:'ab', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Double_Pole_Structure_3',type:'dp', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Cut_Points_4', type:'cut', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVSEETHAPHALMANDI33KVMONDAMARKET_Feeder_Lines_5', type:'lines', feeder:'SEETHAPHALMANDI → MONDAMARKET', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_6', type:'points', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_AB_Switch_7', type:'ab', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Double_Pole_Structure_8',type:'dp', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Cut_Points_9', type:'cut', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVMondamarketClocktower_Feeder_Lines_10', type:'lines', feeder:'MONDAMARKET → CLOCKTOWER', cable:'OH' },
-  { varName:'json_33KVKIMSJamesstreet_11', type:'points', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_AB_Switch_12', type:'ab', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Double_Pole_Structure_13',type:'dp', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Cut_Points_14', type:'cut', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVKIMSJamesstreet_Feeder_Lines_15', type:'lines', feeder:'KIMS → JAMESSTREET', cable:'UG' },
-  { varName:'json_33KVClocktowerNehrunagar_16', type:'points', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_AB_Switch_17', type:'ab', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Double_Pole_Structure_18',type:'dp', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Cut_Points_19', type:'cut', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_33KVClocktowerNehrunagar_Feeder_Lines_20', type:'lines', feeder:'CLOCKTOWER → NEHRUNAGAR', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_21', type:'points', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_AB_Switch_22', type:'ab', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Double_Pole_Structure_23',type:'dp', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Cut_Points_24', type:'cut', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPRAKASHNAGAR_Feeder_Lines_25', type:'lines', feeder:'PATIGADDA → PRAKASHNAGAR', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_26', type:'points', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_AB_Switch_27', type:'ab', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Double_Pole_Structure_28',type:'dp', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Cut_Points_29', type:'cut', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVSANJEEVAIAHPARK_Feeder_Lines_30', type:'lines', feeder:'PATIGADDA → SANJEEVAIAH PARK', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_31', type:'points', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_AB_Switch_32', type:'ab', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Double_Pole_Structure_33',type:'dp', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Cut_Points_34', type:'cut', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVPATIGADDA_Feeder_Lines_35', type:'lines', feeder:'PATIGADDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_36', type:'points', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_AB_Switch_37', type:'ab', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Double_Pole_Structure_38',type:'dp', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Cut_Points_39', type:'cut', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVMONDAMARKET_Feeder_Lines_40', type:'lines', feeder:'PATIGADDA → MONDAMARKET', cable:'OH' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_41', type:'points', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_AB_Switch_42', type:'ab', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Double_Pole_Structure_43',type:'dp', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Cut_Points_44', type:'cut', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVKIMS_Feeder_Lines_45', type:'lines', feeder:'PATIGADDA → KIMS', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_46', type:'points', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_AB_Switch_47', type:'ab', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Double_Pole_Structure_48',type:'dp', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Cut_Points_49', type:'cut', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVJAMESSTREET_Feeder_Lines_50', type:'lines', feeder:'PATIGADDA → JAMES STREET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_51', type:'points', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_AB_Switch_52', type:'ab', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Double_Pole_Structure_53',type:'dp', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Cut_Points_54', type:'cut', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVPATIGADDA33KVBANSILALPET_Feeder_Lines_55', type:'lines', feeder:'PATIGADDA → BANSILALPET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_56', type:'points', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_AB_Switch_57', type:'ab', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Double_Pole_Structure_58',type:'dp', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Cut_Points_59', type:'cut', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVKIMS_Feeder_Lines_60', type:'lines', feeder:'GUNROCK → KIMS', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_61', type:'points', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_AB_Switch_62', type:'ab', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Double_Pole_Structure_63',type:'dp', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Cut_Points_64', type:'cut', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVGUNROCK33KVJAMESSTREET_Feeder_Lines_65', type:'lines', feeder:'GUNROCK → JAMESSTREET', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_66', type:'points', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_AB_Switch_67', type:'ab', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Double_Pole_Structure_68',type:'dp', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Cut_Points_69', type:'cut', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVPATIGADDA_Feeder_Lines_70', type:'lines', feeder:'CHILKALGUDA → PATIGADDA', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_71', type:'points', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_AB_Switch_72', type:'ab', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Double_Pole_Structure_73',type:'dp', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Cut_Points_74', type:'cut', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_132KVCHILKALGUDA33KVCLOCKTOWER_Feeder_Lines_75', type:'lines', feeder:'CHILKALGUDA → CLOCK TOWER', cable:'UG' },
-  { varName:'json_3311KVSSCOORDINATESWITHDATA20_76', type:'ss33', feeder:'33/11KV SS', cable:'-' },
-  { varName:'json_SS_WEB_INTERACT_77', type:'ss33i', feeder:'33/11KV SS (Interactive)', cable:'-' },
-  { varName:'json_FeederPoles_78', type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
-  { varName:'json_Feeder_Segments_WEB_INTERACT_79', type:'fsegi', feeder:'Feeder Segments', cable:'-' },
-  { varName:'json_Feeder_Segments_WEB_DISPLAY_80', type:'fsegd', feeder:'Feeder Segments Display', cable:'-' },
-  { varName:'json_EHTSSCOORDINATESWITHDATA_82', type:'ehts', feeder:'EHT SS', cable:'-' },
-  { varName:'json_SS_WEB_INTERACT_83', type:'ehtsi', feeder:'EHT SS (Interactive)', cable:'-' },
-];
-
 // ══════════════════════════════════════════════════
 // DATA PROCESSING
 // ══════════════════════════════════════════════════
@@ -776,13 +685,11 @@ DATA_REGISTRY.forEach(reg => {
           
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         layer.flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
-            color: '#ffffff', weight: 3, className: flowClass,
-            interactive: false, bubblingMouseEvents: false, pane: 'flowPane'
+            color: '#ffffff', weight: 3, className: flowClass, interactive: false 
         });
 
-        layer.bindPopup(popup(feat, reg), {maxWidth:340, minWidth:260});
+        layer.bindPopup(popup(feat, reg));
         layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, reg)); });
-        layer.on('click', function(e) { L.DomEvent.stopPropagation(e); layer.openPopup(e.latlng); });
 
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
@@ -816,8 +723,8 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(popup(feat, reg), {maxWidth:340, minWidth:260});
-        layer.on('click', function(e) { L.DomEvent.stopPropagation(e); layer.openPopup(e.latlng || layer.getLatLng()); });
+        layer.bindPopup(popup(feat, reg));
+        
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
@@ -914,9 +821,6 @@ function popup(feat, regEntry){
       <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
-  }
-  if(!rows && !headerId) {
-    rows = '<tr><td colspan="2" style="color:#999;font-style:italic;padding:4px">No attributes available</td></tr>';
   }
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
@@ -1215,8 +1119,7 @@ function dismissLoader(){
                 
                 let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
                 layer.flowLayer = L.polyline(coords, {
-                    color: '#ffffff', weight: 3, className: flowClass,
-                    interactive: false, bubblingMouseEvents: false, pane: 'flowPane'
+                    color: '#ffffff', weight: 3, className: flowClass, interactive: false 
                 });
 
                 const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
