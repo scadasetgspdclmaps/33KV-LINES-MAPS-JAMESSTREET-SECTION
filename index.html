@@ -528,9 +528,9 @@ const map = L.map('map',{
   zoomAnimation:true, fadeAnimation:true, markerZoomAnimation:true
 });
 
-// CRITICAL FIX: Create a custom Z-index pane so poles always render ON TOP of lines
+// ── CRITICAL FIX: Custom Z-index pane forces all poles/points above lines! ──
 map.createPane('pointsPane');
-map.getPane('pointsPane').style.zIndex = 650; // 400 is lines, 600 is markers. This is the very top!
+map.getPane('pointsPane').style.zIndex = 650; 
 
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
@@ -651,10 +651,15 @@ const DATA_REGISTRY = [
   { varName:'json_FeederPoles_78', type:'fpoles', feeder:'Feeder Poles', cable:'UG' },
   { varName:'json_Feeder_Segments_WEB_INTERACT_79', type:'fsegi', feeder:'Feeder Segments', cable:'-' },
   { varName:'json_Feeder_Segments_WEB_DISPLAY_80', type:'fsegd', feeder:'Feeder Segments Display', cable:'-' },
+  // json_Feeder_Segments_81 loaded deferred
   { varName:'json_EHTSSCOORDINATESWITHDATA_82', type:'ehts', feeder:'EHT SS', cable:'-' },
   { varName:'json_SS_WEB_INTERACT_83', type:'ehtsi', feeder:'EHT SS (Interactive)', cable:'-' },
 ];
 
+
+// ══════════════════════════════════════════════════
+//  STRING MATCHING ENGINE (FUSES BASE + SEGMENTS)
+// ══════════════════════════════════════════════════
 const allLayers = []; 
 const feederNames = new Set();
 const feederState = {}; 
@@ -663,7 +668,55 @@ const feederLayerMap = {};
 
 const LGstate = { 'ug-lines':true, 'oh-lines':true, points:true, dp:true, ab:true, cut:true, ss33:true, ehts:true, fsegs:true };
 let cableFilter = 'all';
+let globalFeederFallback = true; // Fallback for the "NONE" button
 
+// This function guarantees segments match the master names flawlessly!
+function cleanName(str) {
+    if (!str) return '';
+    let s = String(str).toUpperCase();
+    // Strip everything that isn't a pure location name (removes KV, SS, UG, etc)
+    s = s.replace(/132KV|33\/11KV|33KV|11KV|SS|FEEDER|LINE|UNDERGROUND|OVERHEAD|UG|OH/g, ' ');
+    return s.replace(/[^A-Z0-9]/g, ''); // Keep numbers just in case!
+}
+
+function mapFeederName(raw) {
+    if(!raw) return 'Feeder Segments';
+    let rawClean = cleanName(raw);
+    if(!rawClean) return raw;
+
+    // 1. Exact clean match
+    for(let std of feederNames) {
+        if(cleanName(std) === rawClean) return std;
+    }
+    // 2. Subset match (one is contained within the other)
+    for(let std of feederNames) {
+        let stdClean = cleanName(std);
+        if(stdClean.length > 4 && rawClean.length > 4) {
+            if (stdClean.includes(rawClean) || rawClean.includes(stdClean)) return std;
+        }
+    }
+    return raw;
+}
+
+// Populate the Master Names immediately from the Base Layers
+DATA_REGISTRY.forEach(reg => {
+  try {
+    const data = window[reg.varName];
+    if(!data || !data.features) return;
+    data.features.forEach(feat => {
+      const props = feat.properties || {};
+      const fName = props['Feeder Name'] || reg.feeder;
+      if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
+          feederNames.add(fName);
+      }
+    });
+  } catch(e){}
+});
+
+
+// ══════════════════════════════════════════════════
+//  VISIBILITY MANAGEMENT 
+// ══════════════════════════════════════════════════
 function updateVisibility() {
   let visibleCount = 0;
   allLayers.forEach(item => {
@@ -676,7 +729,11 @@ function updateVisibility() {
 
     const typeIsOn = LGstate[t] !== false;
     const isSubstation = (t === 'ss33' || t === 'ehts');
-    const feederIsOn = feederState[item.feederName] !== false || isSubstation; 
+    
+    // Absolute guarantee: if it's not mapped, fallback to "Hide All" state!
+    const fState = feederState[item.feederName];
+    let feederIsOn = (fState !== undefined) ? (fState !== false) : globalFeederFallback;
+    if (isSubstation) feederIsOn = true;
 
     let cableIsOn = true;
     if(!isSubstation) {
@@ -695,8 +752,8 @@ function updateVisibility() {
       }
       visibleCount++;
     } else {
+      // HIDE EVERYTHING IMMEDIATELY
       if (map.hasLayer(item.layer)) map.removeLayer(item.layer);
-      
       if (item.layer.flowLayer && map.hasLayer(item.layer.flowLayer)) {
           map.removeLayer(item.layer.flowLayer);
       }
@@ -734,7 +791,9 @@ function popup(feat, regEntry){
     }
   });
 
-  const fn = p['Feeder Name'] || (regEntry && regEntry.feeder) || '';
+  const rawFn = p['Feeder Name'] || (regEntry && regEntry.feeder) || '';
+  const fn = mapFeederName(rawFn); // Map so buttons highlight correctly
+  
   let statusBar = '';
   if(fn && (regEntry.type === 'lines' || (regEntry.type && regEntry.type.startsWith('fseg')))) {
     const cur = feederStatus[fn] || 'live';
@@ -765,10 +824,8 @@ DATA_REGISTRY.forEach(reg => {
     const isOH = (cableType === 'OH' || cableType === 'OVERHEAD');
     cableType = isOH ? 'OH' : 'UG';
 
-    const feederName = props['Feeder Name'] || reg.feeder;
-    if (!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
-        feederNames.add(feederName);
-    }
+    const rawFeederName = props['Feeder Name'] || reg.feeder;
+    const feederName = mapFeederName(rawFeederName); // Clean mapping applies here
 
     let layer;
     let poleNoStr = null;
@@ -782,41 +839,29 @@ DATA_REGISTRY.forEach(reg => {
         let color = isOH ? '#f44336' : '#2196f3'; 
         let cStatus = feederStatus[feederName] || 'live';
         
-        // 1. BASE LAYER (Solid Color, handles clicks)
         let customClass = cStatus === 'breakdown' ? 'feeder-breakdown' : '';
         layer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0],
           {color: color, weight: 6, opacity: 0.9, smoothFactor:1.5, className: customClass});
           
-        // 2. OVERLAY LAYER (White Dots)
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
-        let flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
+        layer.flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
             color: '#ffffff', weight: 3, className: flowClass, interactive: false 
         });
-        
-        layer.flowLayer = flowLayer;
 
-        // THE BULLETPROOF CLICK HANDLER FOR LINES
+        // Click bound securely to the line
         layer.on('click', function(e) {
             L.DomEvent.stopPropagation(e);
-            L.popup({className: 'custom-popup-style'})
-             .setLatLng(e.latlng)
-             .setContent(popup(feat, reg))
-             .openOn(map);
+            L.popup({className: 'custom-popup-style'}).setLatLng(e.latlng).setContent(popup(feat, reg)).openOn(map);
         });
 
-        // SAFE HOVER: NO bringToFront() to prevent detached clicks
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
-            if(e.target.flowLayer) {
-                e.target.flowLayer.setStyle({weight: 4}); // Slightly thicken dots on hover
-            }
+            if(e.target.flowLayer) e.target.flowLayer.setStyle({weight: 4});
         });
         layer.on('mouseout', e => {
-            const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder Name'] || reg.feeder);
+            const isFocused = focusedFeeder && focusedFeeder !== feederName;
             e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
-            if(e.target.flowLayer) {
-                e.target.flowLayer.setStyle({weight: 3});
-            }
+            if(e.target.flowLayer) e.target.flowLayer.setStyle({weight: 3});
         });
       }
     }
@@ -824,14 +869,14 @@ DATA_REGISTRY.forEach(reg => {
       const coords = feat.geometry.type==='Point' ? feat.geometry.coordinates : feat.geometry.coordinates[0];
       const ll = [coords[1],coords[0]];
       
-      // CRITICAL FIX: ALL points use pane: 'pointsPane' to physically elevate them above lines
+      // CRITICAL FIX: pane: 'pointsPane' forces ALL points/poles safely ABOVE lines
       if(reg.type==='points' || reg.type==='fpoles'){
         layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#2196f3', weight: 2, pane: 'pointsPane'});
       } else if(reg.type==='cut'){
         layer = L.circleMarker(ll, {radius: 4, fillColor: '#ffffff', fillOpacity: 1, color: '#000000', weight: 2, pane: 'pointsPane'});
       } 
       else if(reg.type==='ab' || reg.type==='dp'){
-        layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square')}); 
+        layer=L.marker(ll,{icon:mkIcon('#ffff00','#000000','square'), pane: 'pointsPane'}); 
       } else if (reg.type.startsWith('ss33')) {
         const ss33Html = `<div class="ss33-wrap"><div class="ss33-ring"></div><div class="ss33-core"><span class="ss33-bolt">⚡</span></div></div>`;
         layer=L.marker(ll,{ zIndexOffset: 1000, icon:L.divIcon({className:'', html:ss33Html, iconSize:[36,36], iconAnchor:[18,18]})});
@@ -841,16 +886,11 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        
-        // THE BULLETPROOF CLICK HANDLER FOR POLES/POINTS
         layer.on('click', function(e) {
             L.DomEvent.stopPropagation(e);
             const latlng = e.latlng || (typeof layer.getLatLng === 'function' ? layer.getLatLng() : null);
             if(latlng) {
-                L.popup({className: 'custom-popup-style'})
-                 .setLatLng(latlng)
-                 .setContent(popup(feat, reg))
-                 .openOn(map);
+                L.popup({className: 'custom-popup-style'}).setLatLng(latlng).setContent(popup(feat, reg)).openOn(map);
             }
         });
         
@@ -895,7 +935,6 @@ if(allCoords.length > 0){ try{ map.fitBounds(L.latLngBounds(allCoords),{padding:
 
 let focusedFeeder = null;
 
-// ── CORE LOGIC: THE 3 VISUAL STATES ──
 function setFeederStatus(fn, status, btnEl) {
   feederStatus[fn] = status;
 
@@ -947,6 +986,7 @@ function setFeederStatus(fn, status, btnEl) {
     }
   });
 
+  // Re-sync all popups inside the map if they are currently open
   document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
@@ -1051,6 +1091,7 @@ function buildFeederChecks(){
 }
 
 function toggleAllFeeders(show){
+  globalFeederFallback = show; // Sets the global kill switch
   [...feederNames].forEach((fn,i)=>{
     feederState[fn] = show;
     const tog = document.getElementById('ftog-'+i);
@@ -1123,7 +1164,14 @@ document.getElementById('srchInput').addEventListener('input', function(e){
   if (found && found.layer.getLatLng) {
     const ll = found.layer.getLatLng();
     map.flyTo(ll, 19, {animate:true});
-    found.layer.openPopup();
+    
+    // Check if it's a marker vs line to open popup properly
+    if (found.layer.getPopup && found.layer.getPopup()) {
+        found.layer.openPopup();
+    } else {
+        L.popup({className: 'custom-popup-style'})
+            .setLatLng(ll).setContent(popup(found.layer.feature, found.reg)).openOn(map);
+    }
     
     const pingIcon = L.divIcon({className: 'radar-ping', iconSize: [0,0]});
     const pingMarker = L.marker(ll, {icon: pingIcon, zIndexOffset: 2000}).addTo(map);
@@ -1166,49 +1214,45 @@ function dismissLoader(){
               
               let color = isOH ? '#f44336' : '#2196f3'; 
               if (isTRANS) color = '#9c27b0'; 
-              
-              let segCable = isOH ? 'OH' : 'UG';
-              if (isTRANS) segCable = '-';
+              let segCable = isOH ? 'OH' : (isTRANS ? '-' : 'UG');
               
               if(feat.geometry.type==='LineString'||feat.geometry.type==='MultiLineString'){
                 const coords=feat.geometry.type==='LineString' ? feat.geometry.coordinates.map(c=>[c[1],c[0]]) : feat.geometry.coordinates[0].map(c=>[c[1],c[0]]);
                 
-                let fName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
-                let cStatus = feederStatus[fName] || 'live';
+                // Mapped Feeder Name guarantees the segment hides/highlights correctly!
+                let rawFName = p['Feeder_Name'] || p['Name of the Feeder'] || 'Feeder Segments';
+                let fName = mapFeederName(rawFName);
                 
+                let cStatus = feederStatus[fName] || 'live';
                 let customClass = cStatus === 'breakdown' ? 'feeder-breakdown' : '';
+                
                 const layer = L.polyline(coords,{color: color, weight: 6, opacity: 0.9, className: customClass});
                 
                 let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
-                let flowLayer = L.polyline(coords, {
+                layer.flowLayer = L.polyline(coords, {
                     color: '#ffffff', weight: 3, className: flowClass, interactive: false 
                 });
-                layer.flowLayer = flowLayer;
 
-                // THE BULLETPROOF CLICK HANDLER
                 const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
                 layer.on('click', function(e) {
                     L.DomEvent.stopPropagation(e);
                     L.popup({className: 'custom-popup-style'})
-                     .setLatLng(e.latlng)
-                     .setContent(popup(feat, regData))
-                     .openOn(map);
+                     .setLatLng(e.latlng).setContent(popup(feat, regData)).openOn(map);
                 });
 
-                // SAFE HOVER: NO bringToFront()
                 layer.on('mouseover',e=>{
                     e.target.setStyle({weight:8,opacity:1});
-                    if(e.target.flowLayer) {
-                        e.target.flowLayer.setStyle({weight: 4});
-                    }
+                    if(e.target.flowLayer) e.target.flowLayer.setStyle({weight: 4});
                 });
                 layer.on('mouseout',e=>{
-                    const isFocused = focusedFeeder && focusedFeeder !== (e.target.feature?.properties['Feeder_Name'] || p['Feeder_Name']);
+                    const isFocused = focusedFeeder && focusedFeeder !== fName;
                     e.target.setStyle({weight:6, opacity: isFocused ? 0.15 : 0.9});
                     if(e.target.flowLayer) e.target.flowLayer.setStyle({weight: 3});
                 });
                 
-                allLayers.push({layer, reg: {type:'fsegs', feeder:'Feeder Segments', cable: segCable}, feederName: fName, cable: segCable, poleNo: null});
+                allLayers.push({layer, reg: regData, feederName: fName, cable: segCable, poleNo: null});
+                if(!feederLayerMap[fName]) feederLayerMap[fName] = [];
+                feederLayerMap[fName].push({layer, reg: regData, cable: segCable});
               }
             } catch(e){}
           });
