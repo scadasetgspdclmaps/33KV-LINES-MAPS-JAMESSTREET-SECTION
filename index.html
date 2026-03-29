@@ -536,6 +536,12 @@ L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
 
+// Dedicated pane for flow dot overlays — pointer-events:none at container level
+// This is the definitive fix so flow dots NEVER intercept clicks
+map.createPane('flowPane');
+map.getPane('flowPane').style.pointerEvents = 'none';
+map.getPane('flowPane').style.zIndex = 399;
+
 function safelyManageClass(layer, className, add) {
     if(!layer) return;
     const el = layer.getElement ? layer.getElement() : layer._path;
@@ -685,11 +691,13 @@ DATA_REGISTRY.forEach(reg => {
           
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         layer.flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
-            color: '#ffffff', weight: 3, className: flowClass, interactive: false 
+            color: '#ffffff', weight: 3, className: flowClass,
+            interactive: false, bubblingMouseEvents: false, pane: 'flowPane'
         });
 
-        layer.bindPopup(popup(feat, reg));
+        layer.bindPopup(popup(feat, reg), {maxWidth:340, minWidth:260});
         layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, reg)); });
+        layer.on('click', function(e) { L.DomEvent.stopPropagation(e); layer.openPopup(e.latlng); });
 
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
@@ -723,8 +731,8 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(popup(feat, reg));
-        
+        layer.bindPopup(popup(feat, reg), {maxWidth:340, minWidth:260});
+        layer.on('click', function(e) { L.DomEvent.stopPropagation(e); layer.openPopup(e.latlng || layer.getLatLng()); });
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
@@ -821,6 +829,9 @@ function popup(feat, regEntry){
       <div class="fs-status-btn${cur==='breakdown'?' active-breakdown':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','breakdown',this)">🔴 DOWN</div>
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
+  }
+  if(!rows && !headerId) {
+    rows = '<tr><td colspan="2" style="color:#999;font-style:italic;padding:4px">No attributes available</td></tr>';
   }
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
@@ -1119,7 +1130,8 @@ function dismissLoader(){
                 
                 let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
                 layer.flowLayer = L.polyline(coords, {
-                    color: '#ffffff', weight: 3, className: flowClass, interactive: false 
+                    color: '#ffffff', weight: 3, className: flowClass,
+                    interactive: false, bubblingMouseEvents: false, pane: 'flowPane'
                 });
 
                 const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
