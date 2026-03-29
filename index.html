@@ -243,49 +243,16 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
   padding: 0 !important;
 }
 .leaflet-popup-tip-container { display: none; }
-.leaflet-popup-content {
-  margin: 14px 16px !important;
-  min-width: 250px;
-}
-.leaflet-popup-close-button {
-  color: #888 !important;
-  font-size: 18px !important;
-  top: 8px !important;
-  right: 8px !important;
-}
+.leaflet-popup-content { margin: 14px 16px !important; min-width: 250px; }
+.leaflet-popup-close-button { color: #888 !important; font-size: 18px !important; top: 8px !important; right: 8px !important; }
 .leaflet-popup-close-button:hover { color: #000 !important; }
 
-/* The HTML Table formatting */
-.pc-header-id {
-  font-family: Arial, sans-serif;
-  font-size: 13px;
-  color: #555;
-  margin-bottom: 10px;
-}
-.popup-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.popup-table th, .popup-table td {
-  padding: 2px 0;
-  vertical-align: top;
-  font-family: Arial, sans-serif;
-  font-size: 11px;
-  color: #222;
-  line-height: 1.4;
-}
-.popup-table th {
-  font-weight: 700;
-  width: 50%;
-  padding-right: 10px;
-  text-align: left;
-}
-.popup-table td {
-  text-align: left;
-  word-break: break-word;
-}
+.pc-header-id { font-family: Arial, sans-serif; font-size: 13px; color: #555; margin-bottom: 10px; }
+.popup-table { width: 100%; border-collapse: collapse; }
+.popup-table th, .popup-table td { padding: 2px 0; vertical-align: top; font-family: Arial, sans-serif; font-size: 11px; color: #222; line-height: 1.4; }
+.popup-table th { font-weight: 700; width: 50%; padding-right: 10px; text-align: left; }
+.popup-table td { text-align: left; word-break: break-word; }
 
-/* Point Labels (Numbers on map) */
 .pole-label {
   background: transparent !important;
   border: none !important;
@@ -363,20 +330,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--navy)}
 .eht-kv { font-family:var(--mono);font-size:7px;color:rgba(255,160,60,0.9); line-height:1;letter-spacing:.5px; }
 
 
-/* ── 1. NORMAL/LIVE (OVERLAY FLOW) ── */
+/* ── 1. NORMAL/LIVE (OVERLAY FLOW DOTS) ── */
 @keyframes energy-flow-overlay { to { stroke-dashoffset: -24; } }
 
-/* CRITICAL FIX: pointer-events: none ensures this layer is physically unclickable! */
 .feeder-flow-overlay {
   stroke-dasharray: 4 20 !important;
   stroke-linecap: round !important;
   animation: energy-flow-overlay 0.8s linear infinite !important;
-  pointer-events: none !important;
-}
-/* Leaflet puts className directly on the SVG <path> element */
-path.feeder-flow-overlay {
-  pointer-events: none !important;
-  cursor: default !important;
+  pointer-events: none !important; /* CRITICAL: Never steal clicks */
 }
 
 /* ── 2. BREAKDOWN (SOS URGENT BLINK) ── */
@@ -387,9 +348,6 @@ path.feeder-flow-overlay {
 .feeder-breakdown { 
   animation: sos-blink 0.8s ease-in-out infinite !important; 
 }
-
-/* Helper to vanish flowing dots completely */
-.hidden-flow { display: none !important; }
 
 
 .fs-status-bar { display:flex;gap:5px;margin-top:8px;padding-top:8px;border-top:1px solid #eee; }
@@ -568,12 +526,6 @@ const map = L.map('map',{
 L.control.zoom({position:'bottomright'}).addTo(map);
 L.control.scale({position:'bottomright',imperial:false}).addTo(map);
 window.addEventListener('resize', () => map.invalidateSize());
-
-// Create a dedicated non-interactive pane for flow dot overlays
-// Setting pointer-events:none on the pane container is the definitive fix
-map.createPane('flowPane');
-map.getPane('flowPane').style.pointerEvents = 'none';
-map.getPane('flowPane').style.zIndex = 399; // below overlayPane (400) so clicks go to overlayPane
 
 function toggleRcard(id) {
   const card = document.getElementById(id);
@@ -783,10 +735,6 @@ function popup(feat, regEntry){
       <div class="fs-status-btn${cur==='idle'?' active-idle':''}" onclick="setFeederStatus('${fn.replace(/'/g,"\\'")}','idle',this)">⏸ IDLE</div>
     </div>`;
   }
-  // Fallback if no rows built
-  if(!rows && !headerId) {
-    rows = '<tr><td colspan="2" style="color:#999;font-style:italic;padding:4px">No attributes available</td></tr>';
-  }
   return `${headerId}<table class="popup-table">${rows}</table>${statusBar}`;
 }
 
@@ -831,30 +779,25 @@ DATA_REGISTRY.forEach(reg => {
           {color: color, weight: 6, opacity: 0.9, smoothFactor:1.5, className: customClass});
           
         // 2. OVERLAY LAYER (White Dots)
-        // FIX: interactive:false + bubblingMouseEvents:false ensures clicks pass through to base layer
         let flowClass = 'feeder-flow-overlay' + (cStatus !== 'live' ? ' hidden-flow' : '');
         let flowLayer = L.polyline(feat.geometry.type==='LineString'?coords:coords[0], {
-            color: '#ffffff', weight: 3, className: flowClass,
-            interactive: false, bubblingMouseEvents: false,
-            pane: 'flowPane'
+            color: '#ffffff', weight: 3, className: flowClass, interactive: false 
         });
         
         layer.flowLayer = flowLayer;
 
-        // BIND POPUP STRICTLY TO THE BASE LAYER
-        layer.bindPopup(popup(feat, reg), {maxWidth: 340, minWidth: 260});
-        layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, reg)); });
-        // Belt-and-suspenders: explicit click handler in case Leaflet default is swallowed
+        // THE BULLETPROOF CLICK HANDLER
         layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            layer.openPopup(e.latlng);
+            L.popup({className: 'custom-popup-style'})
+             .setLatLng(e.latlng)
+             .setContent(popup(feat, reg))
+             .openOn(map);
         });
 
+        // SAFE HOVER: NO bringToFront() to prevent detached clicks
         layer.on('mouseover', e => {
             e.target.setStyle({weight:8, opacity:1});
-            e.target.bringToFront();
             if(e.target.flowLayer) {
-                e.target.flowLayer.bringToFront();
                 e.target.flowLayer.setStyle({weight: 4}); // Slightly thicken dots on hover
             }
         });
@@ -887,20 +830,13 @@ DATA_REGISTRY.forEach(reg => {
       }
 
       if(layer){
-        layer.bindPopup(popup(feat, reg), {maxWidth: 340, minWidth: 260});
-        layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            layer.openPopup(e.latlng || e.target.getLatLng());
-        });
+        // Points don't detach on hover, so standard bindPopup is safe here
+        layer.bindPopup(popup(feat, reg));
+        
         let poleNo = props['Pole Number'] || props['Pole_No'] || props['Name'] || props['NAME'] || props['id'] || props['ID'];
         if(poleNo !== undefined && poleNo !== null && String(poleNo).trim() !== '' && String(poleNo).length < 10) {
             if(!reg.type.startsWith('ss') && !reg.type.startsWith('eht')) {
-                // Bind pole number as permanent tooltip on non-SS markers
                 poleNoStr = String(poleNo).trim();
-                layer.bindTooltip(poleNoStr, {
-                    permanent: true, direction: 'right',
-                    className: 'pole-label', offset: [6, 0]
-                });
             } else {
                 const ssName = String(poleNo).replace('33/11KV ','').replace('33/11KV','').replace('132 KV ','').replace('132KV ','').trim();
                 layer.bindTooltip(ssName, {permanent:true, direction:'top', offset:[0,-16], className:'ss-label'});
@@ -990,6 +926,7 @@ function setFeederStatus(fn, status, btnEl) {
     }
   });
 
+  // Re-sync all popups inside the map if they are currently open
   document.querySelectorAll(`.fi-btn[data-feeder="${fn}"]`).forEach(btn => {
     btn.classList.remove('fi-active');
     if(btn.classList.contains('fi-' + status)) btn.classList.add('fi-active');
@@ -1228,15 +1165,19 @@ function dismissLoader(){
                 });
                 layer.flowLayer = flowLayer;
 
-                // Bind strictly to base layer
-                layer.bindPopup(popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'}));
-                layer.on('popupopen', function(e) { e.popup.setContent(popup(feat, {type:'fsegs', feeder:'Feeder Segments', cable:'-'})); });
+                // THE BULLETPROOF CLICK HANDLER
+                const regData = {type:'fsegs', feeder:'Feeder Segments', cable:'-'};
+                layer.on('click', function(e) {
+                    L.popup({className: 'custom-popup-style'})
+                     .setLatLng(e.latlng)
+                     .setContent(popup(feat, regData))
+                     .openOn(map);
+                });
 
+                // SAFE HOVER: NO bringToFront()
                 layer.on('mouseover',e=>{
                     e.target.setStyle({weight:8,opacity:1});
-                    e.target.bringToFront();
                     if(e.target.flowLayer) {
-                        e.target.flowLayer.bringToFront();
                         e.target.flowLayer.setStyle({weight: 4});
                     }
                 });
